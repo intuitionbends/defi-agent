@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
-    "@types/node": "^22.13.8",
+    "@types/node": "^22.13.14",
     "@types/pg": "^8.11.11",
     "@types/yargs": "^17.0.33",
     "supabase": "^2.15.8",
