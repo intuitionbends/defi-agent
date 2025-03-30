@@ -1,0 +1,41 @@
+{
+  "name": "defi-agent",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "version": "echo $(git rev-list --count HEAD)-$(git rev-parse --short HEAD)",
+    "clean": "rm -rf dist",
+    "dev:start": "ts-node src/main.ts",
+    "start": "tsc && node dist/main.js",
+    "migrate:up": "npx db-migrate up",
+    "migrate:create": "npx db-migrate create",
+    "migrate:down": "npx db-migrate down -c",
+    "migrate:clean": "npx db-migrate down -c 100",
+    "docker:build": "docker build -t defi-agent:$(npm run version -s) -f Dockerfile .",
+    "docker:push": "docker tag defi-agent:$(npm run version -s) 674734398360.dkr.ecr.ap-southeast-1.amazonaws.com/delaunch/defi-agent:$(npm run version -s) && docker push 674734398360.dkr.ecr.ap-southeast-1.amazonaws.com/delaunch/defi-agent:$(npm run version -s)",
+    "docker:build_push": "npm run docker:build && npm run docker:push"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "db-migrate": "^0.11.14",
+    "db-migrate-pg": "^1.5.2",
+    "dotenv": "^16.4.7",
+    "ethers": "5.4",
+    "express": "^4.21.2",
+    "pg": "^8.14.0",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.13.8",
+    "@types/pg": "^8.11.11",
+    "@types/yargs": "^17.0.33",
+    "supabase": "^2.15.8",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  }
+}
