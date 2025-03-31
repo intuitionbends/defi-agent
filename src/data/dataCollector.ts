@@ -137,7 +137,7 @@ class DataCollector {
       this.logger.info(`Fetched ${data.length} pools.`);
       const config = this.configService.loadConfig();
 
-      const filteredPools = data.filter((pool: any) => config.tokens.includes(pool.symbol));
+      const filteredPools = data.filter((pool: any) => config.tokens.includes(pool.symbol) && pool.chain.toLowerCase() === 'aptos');
       this.logger.info(`Filtered to ${filteredPools.length} relevant pools.`);
 
       filteredPools.forEach((pool: { symbol: string; chain: string; project: string; apy: number; tvlUsd: number }) => {
@@ -163,6 +163,20 @@ class DataCollector {
       this.logger.error(`Critical error in data collection: ${error}`);
     }
   }
+
+  // Local tester function (without saving into db)
+  async runDataCollectionWithoutDB(): Promise<void> {
+    try {
+      const pools = await this.fetchPools();
+      if (pools.length > 0) {
+        this.logger.info('Data fetched successfully. Supabase is not configured, so data will not be saved.');
+      } else {
+        this.logger.warn('No data fetched, nothing to display.');
+      }
+    } catch (error) {
+      this.logger.error(`Critical error in data collection: ${error}`);
+    }
+  }
 }
 
 // Start Process
@@ -171,6 +185,6 @@ const collector = new DataCollector();
 
 if (require.main === module) {
     console.log('Starting data collection...');
-    collector.runDataCollection();
+    collector.runDataCollectionWithoutDB();
   setInterval(() => collector.runDataCollection(), COLLECTION_INTERVAL * 1000);
 }
