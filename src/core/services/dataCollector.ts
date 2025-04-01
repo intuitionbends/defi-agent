@@ -2,10 +2,8 @@ import axios from "axios";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import fs from "fs";
 import path from "path";
-import dotenv from "dotenv";
 import winston from "winston";
-
-dotenv.config();
+import { SUPABASE_URL, SUPABASE_KEY } from "../../config/env";
 
 // Logging Service
 class LoggerService {
@@ -76,8 +74,6 @@ class DatabaseService {
   private logger: LoggerService;
 
   constructor(logger: LoggerService) {
-    const SUPABASE_URL = process.env.SUPABASE_URL || "";
-    const SUPABASE_KEY = process.env.SUPABASE_KEY || "";
     this.client = createClient(SUPABASE_URL, SUPABASE_KEY);
     this.logger = logger;
   }
