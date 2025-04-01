@@ -1,0 +1,7 @@
+2025-03-31T16:48:37.569Z - INFO - Fetching pools from DeFiLlama API...
+2025-03-31T16:48:38.089Z - INFO - Fetched 19026 pools.
+2025-03-31T16:48:38.091Z - INFO - Filtered to 3 relevant pools.
+2025-03-31T16:48:38.130Z - INFO - Pool: USDC, Chain: Aptos, Project: echelon-market, APY: 9.40%, TVL: $19,817,270
+2025-03-31T16:48:38.130Z - INFO - Pool: USDT, Chain: Aptos, Project: echelon-market, APY: 9.37%, TVL: $4,941,907
+2025-03-31T16:48:38.130Z - INFO - Pool: USDC, Chain: Aptos, Project: aries-markets, APY: 2.17%, TVL: $573,498
+2025-03-31T16:48:38.130Z - INFO - Data fetched successfully. Supabase is not configured, so data will not be saved.
