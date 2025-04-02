@@ -1,9 +1,12 @@
 import axios from "axios";
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import fs from "fs";
+import { Pool } from "pg";
 import path from "path";
 import winston from "winston";
-import { SUPABASE_URL, SUPABASE_KEY } from "../../config/env";
+import dotenv from "dotenv";
+dotenv.config();
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 // Logging Service
 class LoggerService {
@@ -69,18 +72,20 @@ class ConfigService {
 }
 
 // Database Service
+// Database Service
 class DatabaseService {
-  private client: SupabaseClient;
+  private pool: Pool;
   private logger: LoggerService;
 
   constructor(logger: LoggerService) {
-    this.client = createClient(SUPABASE_URL, SUPABASE_KEY);
+    this.pool = new Pool({ connectionString: process.env.DATABASE_URL });
     this.logger = logger;
   }
 
   async saveApyData(pools: any[]): Promise<void> {
+    const client = await this.pool.connect();
     try {
-      this.logger.info("Saving data to Supabase...");
+      this.logger.info("Saving data to PostgreSQL...");
       const currentTime = Math.floor(Date.now() / 1000);
 
       type ApyRecord = {
@@ -124,55 +129,113 @@ class DatabaseService {
         seen.add(key);
         return true;
       });
-      // Save full history (append pool_id with timestamp)
-      const { error: historyError, status: historyStatus } = await this.client
-        .from("apy_history")
-        .upsert(uniqueRecords, { onConflict: "pool_id, timestamp" });
 
-      if (historyError) {
-        this.logger.error(
-          `Supabase INSERT (history) error (status ${historyStatus}): ${JSON.stringify(
-            historyError,
-            null,
-            2
-          )}`
-        );
-        throw historyError;
-      }
+      await client.query("BEGIN");
 
-      // Save latest snapshot (upsert by pool_id)
-      let uniqueSnapshotRecords = Array.from(
+      // Upsert history
+      const historyInsertText = `
+        INSERT INTO apy_history (
+          pool_id, asset, chain, apy, tvl, timestamp,
+          apy_base, apy_reward, apy_mean_30d,
+          apy_change_1d, apy_change_7d, apy_change_30d, data_source
+        ) VALUES 
+        ${uniqueRecords
+          .map(
+            (_, i) =>
+              `($${i * 13 + 1}, $${i * 13 + 2}, $${i * 13 + 3}, $${
+                i * 13 + 4
+              }, $${i * 13 + 5}, $${i * 13 + 6}, $${i * 13 + 7}, $${
+                i * 13 + 8
+              }, $${i * 13 + 9}, $${i * 13 + 10}, $${i * 13 + 11}, $${
+                i * 13 + 12
+              }, $${i * 13 + 13})`
+          )
+          .join(", ")}
+        ON CONFLICT (pool_id, timestamp) DO NOTHING;
+      `;
+
+      const historyValues = uniqueRecords.flatMap((r) => [
+        r.pool_id,
+        r.asset,
+        r.chain,
+        r.apy,
+        r.tvl,
+        r.timestamp,
+        r.apy_base,
+        r.apy_reward,
+        r.apy_mean_30d,
+        r.apy_change_1d,
+        r.apy_change_7d,
+        r.apy_change_30d,
+        r.data_source,
+      ]);
+
+      await client.query(historyInsertText, historyValues);
+
+      // Upsert snapshot
+      const uniqueSnapshots = Array.from(
         new Map(records.map((r) => [r.pool_id, r])).values()
       );
 
-      const { error: snapshotError, status: snapshotStatus } = await this.client
-        .from("apy_snapshot")
-        .upsert(uniqueSnapshotRecords, { onConflict: "pool_id" });
+      for (const r of uniqueSnapshots) {
+        const snapshotUpsert = `
+          INSERT INTO apy_snapshot (
+            pool_id, asset, chain, apy, tvl, timestamp,
+            apy_base, apy_reward, apy_mean_30d,
+            apy_change_1d, apy_change_7d, apy_change_30d, data_source
+          ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7,
+            $8, $9, $10, $11, $12, $13
+          )
+          ON CONFLICT (pool_id)
+          DO UPDATE SET 
+            asset = EXCLUDED.asset,
+            chain = EXCLUDED.chain,
+            apy = EXCLUDED.apy,
+            tvl = EXCLUDED.tvl,
+            timestamp = EXCLUDED.timestamp,
+            apy_base = EXCLUDED.apy_base,
+            apy_reward = EXCLUDED.apy_reward,
+            apy_mean_30d = EXCLUDED.apy_mean_30d,
+            apy_change_1d = EXCLUDED.apy_change_1d,
+            apy_change_7d = EXCLUDED.apy_change_7d,
+            apy_change_30d = EXCLUDED.apy_change_30d,
+            data_source = EXCLUDED.data_source;
+        `;
 
-      if (snapshotError) {
-        this.logger.error(
-          `Supabase UPSERT (snapshot) error (status ${snapshotStatus}): ${JSON.stringify(
-            snapshotError,
-            null,
-            2
-          )}`
-        );
-        throw snapshotError;
+        const values = [
+          r.pool_id,
+          r.asset,
+          r.chain,
+          r.apy,
+          r.tvl,
+          r.timestamp,
+          r.apy_base,
+          r.apy_reward,
+          r.apy_mean_30d,
+          r.apy_change_1d,
+          r.apy_change_7d,
+          r.apy_change_30d,
+          r.data_source,
+        ];
+
+        await client.query(snapshotUpsert, values);
       }
+
+      await client.query("COMMIT");
 
       this.logger.info(
-        `Saved ${records.length} records to history and ${uniqueRecords.length} records to snapshot.`
+        `Saved ${uniqueRecords.length} to history and ${uniqueSnapshots.length} to snapshot.`
       );
     } catch (error: any) {
-      if (error instanceof Error) {
-        this.logger.error(
-          `Failed to save data to Supabase: ${error.message}\n${error.stack}`
-        );
-      } else {
-        this.logger.error(
-          `Failed to save data to Supabase: ${JSON.stringify(error, null, 2)}`
-        );
-      }
+      await client.query("ROLLBACK");
+      this.logger.error(
+        `Failed to save data to PostgreSQL: ${
+          error instanceof Error ? error.message : JSON.stringify(error)
+        }`
+      );
+    } finally {
+      client.release();
     }
   }
 }

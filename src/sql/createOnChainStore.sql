@@ -5,7 +5,7 @@ create table if not exists apy_history (
   chain text,
   apy numeric,
   tvl numeric,
-  timestamp bigint not null,
+  timestamp timestamptz not null,
   apy_base numeric,
   apy_reward numeric,
   apy_mean_30d numeric,
