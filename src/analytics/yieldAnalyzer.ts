@@ -68,6 +68,41 @@ export class AptosYieldAnalyzer {
 
     return bestPools;
   }
+
+  async getTopStablecoinPools(limit = 5): Promise<ApyRecord[]> {
+    const stablecoins = [
+      "USDC",
+      "USDT",
+      "zUSDC",
+      "USDP",
+      "DAI",
+      "BUSD",
+      "ZUSDC",
+      "ZUSDT",
+      "TUSD",
+    ];
+
+    const { data, error } = await supabase
+      .from("apy_snapshot")
+      .select("pool_id, asset, chain, apy, tvl")
+      .eq("chain", "Aptos");
+
+    if (error) {
+      console.error("Error fetching data for stablecoin pools:", error.message);
+      return [];
+    }
+
+    const stablePools = (data || []).filter(
+      (pool) =>
+        stablecoins.includes(pool.asset.toUpperCase()) &&
+        pool.apy > 0 &&
+        pool.tvl > 0
+    );
+
+    // Sort by APY descending
+    const sorted = stablePools.sort((a, b) => b.apy - a.apy);
+    return sorted.slice(0, limit);
+  }
 }
 
 async function main() {
@@ -88,6 +123,16 @@ async function main() {
   bestPools.forEach((pool) => {
     console.log(
       `- ${pool.asset}: ${pool.apy.toFixed(2)}% APY | ${pool.pool_id}`
+    );
+  });
+
+  console.log("\nTop 5 Stablecoin Pools on Aptos:");
+  const topStablePools = await analyzer.getTopStablecoinPools();
+  topStablePools.forEach((pool, i) => {
+    console.log(
+      `${i + 1}. ${pool.asset} | ${pool.apy.toFixed(
+        2
+      )}% APY | ${pool.tvl.toLocaleString()} TVL | ${pool.pool_id}`
     );
   });
 }
