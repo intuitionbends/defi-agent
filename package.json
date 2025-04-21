@@ -20,6 +20,9 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@intuition-bends/common-js": "^1.2.0",
+    "@jest/globals": "^29.7.0",
+    "@langchain/community": "^0.3.41",
     "@langchain/core": "^0.3.43",
     "@langchain/langgraph": "^0.2.63",
     "@supabase/supabase-js": "^2.49.1",
