@@ -72,7 +72,6 @@ class ConfigService {
 }
 
 // Database Service
-// Database Service
 class DatabaseService {
   private pool: Pool;
   private logger: LoggerService;
@@ -85,155 +84,78 @@ class DatabaseService {
   async saveApyData(pools: any[]): Promise<void> {
     const client = await this.pool.connect();
     try {
-      this.logger.info("Saving data to PostgreSQL...");
-      const currentTime = Math.floor(Date.now() / 1000);
-
-      type ApyRecord = {
-        pool_id: string;
-        asset: string;
-        chain: string;
-        apy: number;
-        tvl: number;
-        timestamp: number;
-        apy_base: number;
-        apy_reward: number;
-        apy_mean_30d: number;
-        apy_change_1d: number;
-        apy_change_7d: number;
-        apy_change_30d: number;
-        data_source: string;
-      };
-
-      const records: ApyRecord[] = pools.map((pool) => ({
-        pool_id: `${pool.symbol}_${pool.chain}_${pool.project}_${
-          pool.poolMeta || ""
-        }`,
-        asset: pool.symbol,
-        chain: pool.chain,
-        apy: Number(pool.apy) || 0,
-        tvl: Number(pool.tvlUsd) || 0,
-        timestamp: currentTime,
-        apy_base: Number(pool.apyBase) || 0,
-        apy_reward: Number(pool.apyReward) || 0,
-        apy_mean_30d: Number(pool.apyMean30d) || 0,
-        apy_change_1d: Number(pool.apyPct1D) || 0,
-        apy_change_7d: Number(pool.apyPct7D) || 0,
-        apy_change_30d: Number(pool.apyPct30D) || 0,
-        data_source: "Defillama",
-      }));
-
-      const seen = new Set();
-      const uniqueRecords = records.filter((record) => {
-        const key = `${record.pool_id}_${record.timestamp}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-
-      await client.query("BEGIN");
-
-      // Upsert history
-      const historyInsertText = `
-        INSERT INTO apy_history (
-          pool_id, asset, chain, apy, tvl, timestamp,
-          apy_base, apy_reward, apy_mean_30d,
-          apy_change_1d, apy_change_7d, apy_change_30d, data_source
-        ) VALUES 
-        ${uniqueRecords
-          .map(
-            (_, i) =>
-              `($${i * 13 + 1}, $${i * 13 + 2}, $${i * 13 + 3}, $${
-                i * 13 + 4
-              }, $${i * 13 + 5}, $${i * 13 + 6}, $${i * 13 + 7}, $${
-                i * 13 + 8
-              }, $${i * 13 + 9}, $${i * 13 + 10}, $${i * 13 + 11}, $${
-                i * 13 + 12
-              }, $${i * 13 + 13})`
-          )
-          .join(", ")}
-        ON CONFLICT (pool_id, timestamp) DO NOTHING;
-      `;
-
-      const historyValues = uniqueRecords.flatMap((r) => [
-        r.pool_id,
-        r.asset,
-        r.chain,
-        r.apy,
-        r.tvl,
-        r.timestamp,
-        r.apy_base,
-        r.apy_reward,
-        r.apy_mean_30d,
-        r.apy_change_1d,
-        r.apy_change_7d,
-        r.apy_change_30d,
-        r.data_source,
-      ]);
-
-      await client.query(historyInsertText, historyValues);
-
-      // Upsert snapshot
-      const uniqueSnapshots = Array.from(
-        new Map(records.map((r) => [r.pool_id, r])).values()
-      );
-
-      for (const r of uniqueSnapshots) {
-        const snapshotUpsert = `
-          INSERT INTO apy_snapshot (
-            pool_id, asset, chain, apy, tvl, timestamp,
-            apy_base, apy_reward, apy_mean_30d,
-            apy_change_1d, apy_change_7d, apy_change_30d, data_source
-          ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7,
-            $8, $9, $10, $11, $12, $13
-          )
-          ON CONFLICT (pool_id)
-          DO UPDATE SET 
-            asset = EXCLUDED.asset,
-            chain = EXCLUDED.chain,
-            apy = EXCLUDED.apy,
-            tvl = EXCLUDED.tvl,
-            timestamp = EXCLUDED.timestamp,
-            apy_base = EXCLUDED.apy_base,
-            apy_reward = EXCLUDED.apy_reward,
-            apy_mean_30d = EXCLUDED.apy_mean_30d,
-            apy_change_1d = EXCLUDED.apy_change_1d,
-            apy_change_7d = EXCLUDED.apy_change_7d,
-            apy_change_30d = EXCLUDED.apy_change_30d,
-            data_source = EXCLUDED.data_source;
-        `;
-
-        const values = [
-          r.pool_id,
-          r.asset,
-          r.chain,
-          r.apy,
-          r.tvl,
-          r.timestamp,
-          r.apy_base,
-          r.apy_reward,
-          r.apy_mean_30d,
-          r.apy_change_1d,
-          r.apy_change_7d,
-          r.apy_change_30d,
-          r.data_source,
-        ];
-
-        await client.query(snapshotUpsert, values);
+      this.logger.info("Saving data to `pool_yields` table...");
+      const currentTime = new Date().toISOString();
+  
+      const recordMap = new Map<string, any>(); //dedupe records
+  
+      for (const pool of pools) {
+        const original_id = `${pool.symbol}_${pool.chain}_${pool.project}_${pool.poolMeta || ""}`;
+        const key = `${original_id}_1`; // data_source is fixed to 1
+  
+        const record = {
+          original_id,
+          data_source: 1,
+          chain: pool.chain,
+          symbol: pool.symbol,
+          project: pool.project,
+          apy: Number(pool.apy) || 0,
+          apy_base: Number(pool.apyBase) || 0,
+          apy_base_7d: null,
+          apy_mean_30d: Number(pool.apyMean30d) || 0,
+          apy_pct_1d: Number(pool.apyPct1D) || 0,
+          apy_pct_7d: Number(pool.apyPct7D) || 0,
+          apy_pct_30d: Number(pool.apyPct30D) || 0,
+          tvl_usd: Number(pool.tvlUsd) || 0,
+          created_at: currentTime,
+          updated_at: currentTime,
+        };
+  
+        recordMap.set(key, record); // will overwrite duplicate keys
       }
-
+  
+      const newRecords = Array.from(recordMap.values());
+  
+      const placeholders = newRecords.map((_, i) => {
+        const offset = i * 15;
+        return `(${Array.from({ length: 15 }, (_, j) => `$${offset + j + 1}`).join(", ")})`;
+      }).join(", ");
+  
+      const insertQuery = `
+        INSERT INTO pool_yields (
+          original_id, data_source, chain, symbol, project,
+          apy, apy_base, apy_base_7d, apy_mean_30d,
+          apy_pct_1d, apy_pct_7d, apy_pct_30d,
+          tvl_usd, created_at, updated_at
+        )
+        VALUES ${placeholders}
+        ON CONFLICT (original_id, data_source) DO UPDATE SET
+          apy = EXCLUDED.apy,
+          apy_base = EXCLUDED.apy_base,
+          apy_base_7d = EXCLUDED.apy_base_7d,
+          apy_mean_30d = EXCLUDED.apy_mean_30d,
+          apy_pct_1d = EXCLUDED.apy_pct_1d,
+          apy_pct_7d = EXCLUDED.apy_pct_7d,
+          apy_pct_30d = EXCLUDED.apy_pct_30d,
+          tvl_usd = EXCLUDED.tvl_usd,
+          updated_at = EXCLUDED.updated_at;
+      `;
+  
+      const values = newRecords.flatMap(r => [
+        r.original_id, r.data_source, r.chain, r.symbol, r.project,
+        r.apy, r.apy_base, r.apy_base_7d, r.apy_mean_30d,
+        r.apy_pct_1d, r.apy_pct_7d, r.apy_pct_30d,
+        r.tvl_usd, r.created_at, r.updated_at,
+      ]);
+  
+      await client.query("BEGIN");
+      await client.query(insertQuery, values);
       await client.query("COMMIT");
-
-      this.logger.info(
-        `Saved ${uniqueRecords.length} to history and ${uniqueSnapshots.length} to snapshot.`
-      );
+  
+      this.logger.info(`Saved ${newRecords.length} records to pool_yields.`);
     } catch (error: any) {
       await client.query("ROLLBACK");
-      this.logger.error(
-        `Failed to save data to PostgreSQL: ${
-          error instanceof Error ? error.message : JSON.stringify(error)
-        }`
-      );
+      this.logger.error(`Failed to save to pool_yields: ${error instanceof Error ? error.message : JSON.stringify(error)}`);
     } finally {
       client.release();
     }
