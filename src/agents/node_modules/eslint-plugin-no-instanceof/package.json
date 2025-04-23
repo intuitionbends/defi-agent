@@ -1,0 +1,28 @@
+{
+  "name": "eslint-plugin-no-instanceof",
+  "version": "1.0.1",
+  "description": "Disallows use of instanceof operator, useful in TS envs where code relies purely on structural typing (i.e. static typing based on presence of attributes)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+
+  "scripts": {
+    "build": "tsc",
+    "prepublish": "npm run build && cp package.json README.md package",
+    "test": "jest"
+  },
+  "keywords": [
+    "eslint",
+    "eslintplugin",
+    "eslint-plugin"
+  ],
+  "author": "samuel.melkovic",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/eslint": "^7.2.8",
+    "@types/jest": "^26.0.22",
+    "eslint": "^7.23.0",
+    "jest": "^26.6.3",
+    "ts-jest": "^26.5.4",
+    "ts-node": "^9.1.1"
+  }
+}

@@ -1,3 +1,5 @@
 /node_modules
 .env
 /src/core/logs
+# LangGraph API
+.langgraph_api
