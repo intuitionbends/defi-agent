@@ -1,0 +1,118 @@
+import { Pool } from "pg";
+import winston from "winston";
+import { anyToPoolYield, PoolYield } from "../../types/types";
+import { Chain } from "../../types/enums";
+
+export class DatabaseService {
+  private pool: Pool;
+  private logger: winston.Logger;
+
+  constructor(pool: Pool, logger: winston.Logger) {
+    this.pool = pool;
+    this.logger = logger;
+  }
+
+  async getTopAPYPoolYields(
+    chain: Chain = Chain.Aptos,
+    minTvlUsd = 100_000,
+    limit = 5,
+  ): Promise<PoolYield[]> {
+    const result = await this.pool.query(
+      `SELECT original_id, data_source, chain, symbol, project, apy, apy_base, apy_base_7d, apy_mean_30d, apy_pct_1d, apy_pct_7d, apy_pct_30d, tvl_usd FROM pool_yields 
+        WHERE chain = $1 and apy > 0 and tvl_usd > $2 order by apy desc limit $3`,
+      [chain, minTvlUsd, limit],
+    );
+
+    return result.rows.map(anyToPoolYield);
+  }
+
+  async getBestPoolYieldByAsset(chain: Chain = Chain.Aptos): Promise<PoolYield[]> {
+    const result = await this.pool.query(
+      `SELECT DISTINCT ON (symbol) 
+      original_id, data_source, chain, symbol, project, apy, apy_base, apy_base_7d, apy_mean_30d, apy_pct_1d, apy_pct_7d, apy_pct_30d, tvl_usd
+      FROM pool_yields
+      WHERE chain = $1 AND apy > 0
+      ORDER BY symbol, apy DESC`,
+      [chain],
+    );
+
+    return result.rows.map(anyToPoolYield);
+  }
+
+  async upsertPoolYields(poolYields: PoolYield[]): Promise<number> {
+    if (poolYields.length === 0) {
+      return 0;
+    }
+
+    // TODO: add tx wrapper
+    try {
+      const result = await this.pool.query(
+        `
+        INSERT INTO pool_yields (
+          original_id,
+          data_source,
+          chain,
+          symbol,
+          project,
+          apy,
+          apy_base,
+          apy_base_7d,
+          apy_mean_30d,
+          apy_pct_1d,
+          apy_pct_7d,
+          apy_pct_30d,
+          tvl_usd
+        ) VALUES 
+        ${poolYields
+          .map(
+            (_, i) =>
+              `($${i * 13 + 1}, $${i * 13 + 2}, $${i * 13 + 3}, $${i * 13 + 4}, $${i * 13 + 5}, $${
+                i * 13 + 6
+              }, $${i * 13 + 7}, $${i * 13 + 8}, $${i * 13 + 9}, $${i * 13 + 10}, $${
+                i * 13 + 11
+              }, $${i * 13 + 12}, $${i * 13 + 13})`,
+          )
+          .join(", ")}
+        ON CONFLICT (original_id, data_source) DO UPDATE SET 
+          chain = EXCLUDED.chain,
+          symbol = EXCLUDED.symbol,
+          project = EXCLUDED.project,
+          apy = EXCLUDED.apy,
+          apy_base = EXCLUDED.apy_base,
+          apy_base_7d = EXCLUDED.apy_base_7d,
+          apy_mean_30d = EXCLUDED.apy_mean_30d,
+          apy_pct_1d = EXCLUDED.apy_pct_1d,
+          apy_pct_7d = EXCLUDED.apy_pct_7d,
+          apy_pct_30d = EXCLUDED.apy_pct_30d,
+          tvl_usd = EXCLUDED.tvl_usd,
+          updated_at = NOW()
+      `,
+        poolYields
+          .map((y) => [
+            y.originalId,
+            y.dataSource,
+            y.chain,
+            y.symbol,
+            y.project,
+            y.apy,
+            y.apyBase,
+            y.apyBase7d,
+            y.apyMean30d,
+            y.apyPct1d,
+            y.apyPct7d,
+            y.apyPct30d,
+            y.tvlUsd,
+          ])
+          .flat(),
+      );
+
+      return result.rowCount || 0;
+    } catch (error: any) {
+      this.logger.error(
+        `save pool yields to DB: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
+      );
+
+      return 0;
+    }
+  }
+}
