@@ -142,3 +142,5 @@ dist
 .pnp.*
 
 **/*.log
+
+src/**/node_modules
