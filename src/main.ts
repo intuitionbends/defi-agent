@@ -1,7 +1,6 @@
 import { Pool } from "pg";
 import dotenv from "dotenv";
 import { createLogger } from "@intuition-bends/common-js";
-import { DataCollector } from "./core/services/dataCollector";
 import { loadConfig } from "./config";
 import { DatabaseService } from "./core/services/database";
 import { DefiLlama } from "./data-sources/defillama";
