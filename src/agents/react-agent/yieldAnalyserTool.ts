@@ -1,7 +1,7 @@
-import { AptosYieldAnalyser } from "../../analytics/AptosYieldAnalyser.ts";
+import { AptosYieldAnalyser } from "../../analytics/AptosYieldAnalyser.js";
 import { StructuredTool } from "langchain/tools";
 import { z } from "zod";
-import { PoolYieldRecord } from "../../types/yields";
+import { PoolYieldRecord } from "../../types/yields.js";
 
 export default class GetTopAptosYieldsTool extends StructuredTool {
   name = "getTopAptosYields";
