@@ -3,7 +3,7 @@
  * Tools are functions that the agent can use to interact with external systems or perform specific tasks.
  */
 import { TavilySearchResults } from "@langchain/community/tools/tavily_search";
-import GetTopAptosYieldsTool from "./yieldAnalyserTool";
+import GetTopAptosYieldsTool from "./tools/yieldAnalyserTool";
 /**
  * Tavily search tool configuration
  * This tool allows the agent to perform web searches using the Tavily API.

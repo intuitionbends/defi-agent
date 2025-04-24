@@ -1,9 +1,10 @@
 
 // src/services/AptosYieldAnalyzer.ts
 import { createClient } from "@supabase/supabase-js";
-import { SUPABASE_URL, SUPABASE_KEY } from "../config/env";
+import dotenv from "dotenv";
+dotenv.config();
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = createClient(process.env.SUPABASE_URL as string, process.env.SUPABASE_KEY as string);
 
 type PoolYieldRecord = {
   original_id: string;
