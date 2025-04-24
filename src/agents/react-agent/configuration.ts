@@ -27,7 +27,7 @@ export function ensureConfiguration(
   return {
     systemPromptTemplate:
       configurable.systemPromptTemplate ?? SYSTEM_PROMPT_TEMPLATE,
-    model: configurable.model ?? "openrouter/google/gemini-2.5-pro-preview-03-25",
+    model: configurable.model ?? "openrouter/openai/gpt-4o-mini",
   };
 }
 

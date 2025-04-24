@@ -3,7 +3,7 @@
  * Tools are functions that the agent can use to interact with external systems or perform specific tasks.
  */
 import { TavilySearchResults } from "@langchain/community/tools/tavily_search";
-import { GetTopAptosYieldsTool } from "./yieldAnalyserTool.js";
+import GetTopAptosYieldsTool from "./yieldAnalyserTool";
 /**
  * Tavily search tool configuration
  * This tool allows the agent to perform web searches using the Tavily API.
@@ -21,4 +21,4 @@ const getTopAptosYields = new GetTopAptosYieldsTool();
  * and add them to this array.
  * See https://js.langchain.com/docs/how_to/custom_tools/#tool-function for more information.
  */
-export const TOOLS = [searchTavily, getTopAptosYields];
+export const TOOLS = [ getTopAptosYields];

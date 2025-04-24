@@ -1,4 +1,6 @@
 {
+  "module": "NodeNext",
+  "moduleResolution": "NodeNext",
   "extends": "@tsconfig/recommended",
   "compilerOptions": {
     "outDir": "./dist",
