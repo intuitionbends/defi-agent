@@ -163,7 +163,7 @@ class DatabaseService {
 }
 
 // Data Collector Service
-class DataCollector {
+export class DataCollector {
   private logger: LoggerService;
   private configService: ConfigService;
   private dbService: DatabaseService;
