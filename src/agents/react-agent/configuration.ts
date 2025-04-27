@@ -27,6 +27,8 @@ export function ensureConfiguration(
   return {
     systemPromptTemplate:
       configurable.systemPromptTemplate ?? SYSTEM_PROMPT_TEMPLATE,
-    model: configurable.model ?? "claude-3-7-sonnet-latest",
+    model: configurable.model ?? "openrouter/openai/gpt-4o-mini",
   };
 }
+
+// openrouter/openai/gpt-4.1
