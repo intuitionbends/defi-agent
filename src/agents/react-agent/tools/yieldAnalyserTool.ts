@@ -8,7 +8,7 @@ export default class GetTopAptosYieldsTool extends StructuredTool {
   description = "Returns the top yield opportunities on the Aptos chain. You can optionally filter by a category (project name).";
 
   schema = z.object({
-    limit: z.number().nullable().default(5), // <-- IMPORTANT FIX
+    limit: z.number().nullable().default(5), 
     category: z.string().nullable(),
   });
 
@@ -39,7 +39,7 @@ export default class GetTopAptosYieldsTool extends StructuredTool {
       )).join("\n");
     } catch (err) {
       console.error("Error inside GetTopAptosYieldsTool:", err);
-      return "An error occurred while fetching yields."; // <-- Fallback
+      return "An error occurred while fetching yields."; 
     }
   }
 }
