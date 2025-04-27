@@ -2,15 +2,7 @@
  * This file defines the tools available to the ReAct agent.
  * Tools are functions that the agent can use to interact with external systems or perform specific tasks.
  */
-import { TavilySearchResults } from "@langchain/community/tools/tavily_search";
-import GetTopAptosYieldsTool from "./tools/yieldAnalyserTool";
-/**
- * Tavily search tool configuration
- * This tool allows the agent to perform web searches using the Tavily API.
- */
-const searchTavily = new TavilySearchResults({
-  maxResults: 3,
-});
+import GetTopAptosYieldsTool from "./tools/YieldAnalyserTool";
 
 const getTopAptosYields = new GetTopAptosYieldsTool();
 /**

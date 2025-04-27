@@ -1,8 +1,9 @@
 import { scheduleAligned } from "@intuition-bends/common-js";
 import winston from "winston";
-import { DatabaseService } from "./database";
+import { DatabaseService } from "./Database";
 import { DefiLlama } from "../../data-sources/defillama";
 import { Chain } from "../../types/enums";
+import { Pool } from "pg";
 
 export class DataCollector {
   private dbService: DatabaseService;
@@ -33,4 +34,31 @@ export class DataCollector {
       await this.runOnce(chains);
     }, interval);
   }
+}
+
+if (require.main === module) {
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+  });
+
+  const logger = winston.createLogger({
+    level: 'info',
+    format: winston.format.combine(
+      winston.format.timestamp(),
+      winston.format.simple()
+    ),
+    transports: [
+      new winston.transports.Console()
+    ]
+  });
+
+  const databaseService = new DatabaseService(pool, logger);
+  const defillama = new DefiLlama(logger);
+
+  const collector = new DataCollector(databaseService, logger, defillama);
+
+  const chains: Chain[] = [Chain.Aptos]; 
+  const interval = 60 * 1000; 
+
+  collector.run(chains, interval);
 }

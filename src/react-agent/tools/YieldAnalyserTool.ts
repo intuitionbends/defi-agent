@@ -15,13 +15,12 @@ export default class GetTopAptosYieldsTool extends StructuredTool {
   async _call({ limit, category }: { limit: number | null; category: string | null }): Promise<string> {
     try {
       const analyzer = new AptosYieldAnalyser();
-  
       const effectiveLimit = limit ?? 5;
   
       let results: PoolYieldRecord[] = await analyzer.getTopAptosPools(effectiveLimit);
   
       if (!results) {
-        return "No results found."; // <-- Always return a string
+        return "No results found."; 
       }
   
       if (category) {

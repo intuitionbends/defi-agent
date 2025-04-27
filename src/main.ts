@@ -4,9 +4,9 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import { createLogger } from "@intuition-bends/common-js";
-import { DataCollector } from "./core/services/dataCollector";
+import { DataCollector } from "./core/services/DataCollector";
 import { loadConfig } from "./config";
-import { DatabaseService } from "./core/services/database";
+import { DatabaseService } from "./core/services/Database";
 import { DefiLlama } from "./data-sources/defillama";
 
 const main = async () => {
