@@ -136,3 +136,6 @@ dist
 .pnp.*
 
 **/*.log
+
+# LangGraph API
+.langgraph_api
