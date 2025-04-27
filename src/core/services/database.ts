@@ -18,12 +18,41 @@ export class DatabaseService {
     limit = 5,
   ): Promise<PoolYield[]> {
     const result = await this.pool.query(
-      `SELECT original_id, data_source, chain, symbol, project, apy, apy_base, apy_base_7d, apy_mean_30d, apy_pct_1d, apy_pct_7d, apy_pct_30d, tvl_usd FROM pool_yields 
-        WHERE chain = $1 and apy > 0 and tvl_usd > $2 order by apy desc limit $3`,
+      `SELECT original_id, data_source, chain, symbol, project, apy, apy_base, apy_base_7d, 
+              apy_mean_30d, apy_pct_1d, apy_pct_7d, apy_pct_30d, tvl_usd 
+       FROM pool_yields 
+       WHERE LOWER(chain) = LOWER($1) 
+         AND apy > 0 
+         AND tvl_usd > $2 
+       ORDER BY apy DESC 
+       LIMIT $3`,
       [chain, minTvlUsd, limit],
     );
+    const { rows } = await this.pool.query('SELECT current_database(), inet_server_addr(), inet_server_port();');
+    console.log("Connected to database:", rows[0]);
+
+    console.log("Query returned rows:", result.rows.length);
+    console.log("Example row:", result.rows[0]);
 
     return result.rows.map(anyToPoolYield);
+  }
+
+  async getAverageApy(): Promise<number | null> {
+    const { rows } = await this.pool.query(`
+      SELECT AVG(apy) as avg_apy
+      FROM pool_yields
+      WHERE chain = 'aptos'
+    `);
+    return rows[0]?.avg_apy || null;
+  }
+
+  async getTotalTvl(): Promise<number | null> {
+    const { rows } = await this.pool.query(`
+      SELECT SUM(tvl_usd) as total_tvl
+      FROM pool_yields
+      WHERE chain = 'aptos'
+    `);
+    return rows[0]?.total_tvl || null;
   }
 
   async getBestPoolYieldByAsset(chain: Chain = Chain.Aptos): Promise<PoolYield[]> {
@@ -106,6 +135,7 @@ export class DatabaseService {
           .flat(),
       );
 
+      console.log("result", result);
       return result.rowCount || 0;
     } catch (error: any) {
       this.logger.error(

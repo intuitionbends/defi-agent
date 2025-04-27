@@ -1,7 +1,12 @@
-import { AptosYieldAnalyser } from "../service/AptosYieldAnalyser.js";
 import { StructuredTool } from "langchain/tools";
 import { z } from "zod";
-import { PoolYieldRecord } from "../../../types/yields.js";
+import { PoolYield } from "../../types/types.js";
+import { DatabaseService } from "../../core/services/Database";
+import { Pool } from "pg";
+import winston from "winston";
+import { Chain } from "../../types/enums.js";
+import dotenv from "dotenv";
+dotenv.config();
 
 export default class GetTopAptosYieldsTool extends StructuredTool {
   name = "getTopAptosYields";
@@ -14,11 +19,26 @@ export default class GetTopAptosYieldsTool extends StructuredTool {
 
   async _call({ limit, category }: { limit: number | null; category: string | null }): Promise<string> {
     try {
-      const analyzer = new AptosYieldAnalyser();
+      const pool = new Pool({
+          connectionString: process.env.DATABASE_URL,
+        });
+
+        console.log("Database URL:", process.env.DATABASE_URL);
+
+      const logger = winston.createLogger({
+        level: 'info',
+        format: winston.format.combine(
+          winston.format.timestamp(),
+          winston.format.simple()
+        ),
+        transports: [
+          new winston.transports.Console()
+        ]
+      });
+      const databaseService = new DatabaseService(pool, logger);      
       const effectiveLimit = limit ?? 5;
   
-      let results: PoolYieldRecord[] = await analyzer.getTopAptosPools(effectiveLimit);
-  
+      let results: PoolYield[] = await databaseService.getTopAPYPoolYields(Chain.Aptos, 100_000, effectiveLimit);
       if (!results) {
         return "No results found."; 
       }
@@ -34,7 +54,7 @@ export default class GetTopAptosYieldsTool extends StructuredTool {
       }
   
       return results.map(pool => (
-        `${pool.symbol} (${pool.project}) — ${pool.apy.toFixed(2)}% APY (TVL: $${pool.tvl_usd.toLocaleString()})`
+        `${pool.symbol} (${pool.project}) — ${pool.apy.toFixed(2)}% APY (TVL: $${pool.tvlUsd.toLocaleString()})`
       )).join("\n");
     } catch (err) {
       console.error("Error inside GetTopAptosYieldsTool:", err);

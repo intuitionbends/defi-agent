@@ -13,4 +13,4 @@ const getTopAptosYields = new GetTopAptosYieldsTool();
  * and add them to this array.
  * See https://js.langchain.com/docs/how_to/custom_tools/#tool-function for more information.
  */
-export const TOOLS = [ getTopAptosYields];
+export const TOOLS = [getTopAptosYields];
