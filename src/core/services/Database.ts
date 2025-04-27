@@ -45,15 +45,15 @@ export class DatabaseService {
 
     const result = await this.pool.query(
       `
-        INSERT INTO available_interactions (chain, project, name, args) VALUES
+        INSERT INTO available_interactions (chain, project, sign) VALUES
         ${interactions
-          .map((_, i) => `($${i * 4 + 1}, $${i * 4 + 2}, $${i * 4 + 3}, $${i * 4 + 4})`)
+          .map((_, i) => `($${i * 4 + 1}, $${i * 4 + 2}, $${i * 4 + 3})`)
           .join(", ")}
         ON CONFLICT (chain, project, name) DO UPDATE SET
           args = EXCLUDED.args,
           updated_at = NOW()
       `,
-      interactions.map((i) => [i.chain, i.project, i.name, JSON.stringify(i.args)]).flat(),
+      interactions.map((i) => [i.chain, i.project, i.sign]).flat(),
     );
 
     return result.rowCount || 0;
