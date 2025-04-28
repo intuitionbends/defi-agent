@@ -17,4 +17,4 @@ create table if not exists pool_yields (
   PRIMARY KEY (original_id, data_source)
 );
 
-create index idx_pool_yields_chain_symbol_project on pool_yields(chain, symbol, project);
+create index if not exists idx_pool_yields_chain_symbol_project on pool_yields(chain, symbol, project);
