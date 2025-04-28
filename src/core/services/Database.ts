@@ -57,6 +57,32 @@ export class DatabaseService {
     );
 
     return result.rowCount || 0;
+
+  }
+  async checkPoolAvailable(project: string, symbol?: string): Promise<boolean> {
+    try {
+      let query = `
+        SELECT 1
+        FROM pool_yields
+        WHERE LOWER(project) = LOWER($1)
+      `;
+      const params: any[] = [project];
+  
+      if (symbol) {
+        query += ` AND LOWER(symbol) = LOWER($2)`;
+        params.push(symbol);
+      }
+      query += ` LIMIT 1`;
+      const { rowCount } = await this.pool.query(query, params);
+      
+      return !!rowCount && rowCount > 0;
+
+    } catch (error: any) {
+      this.logger.error(
+        `Error checking pool availability: ${error instanceof Error ? error.message : JSON.stringify(error)}`,
+      );
+      return false;
+    }
   }
 
   async getTopAPYPoolYields(

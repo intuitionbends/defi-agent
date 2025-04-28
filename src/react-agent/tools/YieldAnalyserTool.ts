@@ -64,3 +64,4 @@ export default class GetTopAptosYieldsTool extends StructuredTool {
     }
   }
 }
+
