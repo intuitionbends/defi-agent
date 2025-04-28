@@ -2,61 +2,65 @@ import { StructuredTool } from "langchain/tools";
 import { z } from "zod";
 import { PoolYield } from "../../types/types.js";
 import { DatabaseService } from "../../core/services/Database";
-import { Pool } from "pg";
 import winston from "winston";
 import { Chain } from "../../types/enums.js";
 import dotenv from "dotenv";
+import { formatNumberReadable } from "@intuition-bends/common-js";
 dotenv.config();
 
 export default class GetTopAptosYieldsTool extends StructuredTool {
-  name = "getTopAptosYields";
-  description = "Returns the top yield opportunities on the Aptos chain. You can optionally filter by a category (project name).";
+  public name = "getTopAptosYields";
+  public description =
+    "Returns the top yield opportunities on the Aptos chain. You can optionally filter by a category (project name).";
 
-  schema = z.object({
-    limit: z.number().nullable().default(5), 
+  public schema = z.object({
+    limit: z.number().nullable().default(5),
     category: z.string().nullable(),
   });
 
-  async _call({ limit, category }: { limit: number | null; category: string | null }): Promise<string> {
-    try {
-      const pool = new Pool({
-          connectionString: process.env.DATABASE_URL,
-        });
+  private logger: winston.Logger;
+  private databaseService: DatabaseService;
 
-      const logger = winston.createLogger({
-        level: 'info',
-        format: winston.format.combine(
-          winston.format.timestamp(),
-          winston.format.simple()
-        ),
-        transports: [
-          new winston.transports.Console()
-        ]
-      });
-      const databaseService = new DatabaseService(pool, logger);      
-      const effectiveLimit = limit ?? 5;
-  
-      let results: PoolYield[] = await databaseService.getTopAPYPoolYields(Chain.Aptos, 100_000, effectiveLimit);
-      if (!results) {
-        return "No results found."; 
+  constructor(logger: winston.Logger, databaseService: DatabaseService) {
+    super();
+
+    this.logger = logger;
+    this.databaseService = databaseService;
+  }
+
+  async _call({
+    limit,
+    category,
+  }: {
+    limit: number | null;
+    category: string | null;
+  }): Promise<string> {
+    try {
+      let yields: PoolYield[] = await this.databaseService.getTopAPYPoolYields(
+        Chain.Aptos,
+        100_000,
+        limit || 5,
+      );
+      if (!yields) {
+        return "No yields found.";
       }
-  
+
       if (category) {
-        results = results.filter(pool =>
-          pool.project?.toLowerCase().includes(category.toLowerCase())
-        );
+        yields = yields.filter((y) => y.project?.toLowerCase().includes(category.toLowerCase()));
       }
-  
-      if (!results.length) {
-        return "No high-yield pools found.";
+
+      if (!yields.length) {
+        return "No pool yields found.";
       }
-  
-      return results.map(pool => (
-        `${pool.symbol} (${pool.project}) — ${pool.apy.toFixed(2)}% APY (TVL: $${pool.tvlUsd.toLocaleString()})`
-      )).join("\n");
+
+      return yields
+        .map(
+          (y) =>
+            `[${y.project}] ${y.symbol} — ${y.apy.toFixed(2)}% APY (TVL: $${formatNumberReadable(y.tvlUsd, 2)})`,
+        )
+        .join("\n");
     } catch (err) {
-      console.error("Error inside GetTopAptosYieldsTool:", err);
-      return "An error occurred while fetching yields."; 
+      return "An error occurred while fetching yields.";
     }
   }
 }
