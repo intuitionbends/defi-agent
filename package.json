@@ -2,9 +2,10 @@
   "name": "defi-agent",
   "version": "1.0.0",
   "main": "index.js",
+  "packageManager": "npm@10.9.2",
   "scripts": {
     "dev": "npx @langchain/langgraph-cli dev --port 2024 --config ./langgraph.json",
-    "build": "turbo build:internal --filter=agents",
+    "build": "turbo build:internal",
     "build:internal": "npm run clean && tsc",
     "version": "echo $(git rev-list --count HEAD)-$(git rev-parse --short HEAD)",
     "clean": "rm -rf dist",
