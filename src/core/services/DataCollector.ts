@@ -27,7 +27,10 @@ export class DataCollector {
   }
 
   run(chains: Chain[], interval: number): void {
-    this.logger.info(`Starting data collector for chains: ${chains.join(", ")}`);
+    this.logger.info(
+      `start data collector for chains: ${chains.join(", ")}, scrape every ${interval / 1000} seconds`,
+    );
+
     scheduleAligned(async () => {
       await this.runOnce(chains);
     }, interval);
