@@ -29,6 +29,7 @@
     "@langchain/community": "^0.3.41",
     "@langchain/core": "^0.3.43",
     "@langchain/langgraph": "^0.2.63",
+    "@langchain/langgraph-checkpoint-postgres": "^0.0.4",
     "@langchain/mongodb": "^0.1.0",
     "@langchain/openai": "^0.4.4",
     "axios": "^1.8.4",

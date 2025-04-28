@@ -2,6 +2,7 @@ import { AIMessage } from "@langchain/core/messages";
 import { RunnableConfig } from "@langchain/core/runnables";
 import { MessagesAnnotation, StateGraph } from "@langchain/langgraph";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
+import { PostgresSaver } from "@langchain/langgraph-checkpoint-postgres";
 
 import { ConfigurationSchema, ensureConfiguration } from "./configuration.js";
 import { TOOLS } from "./tools.js";
@@ -67,9 +68,19 @@ const workflow = new StateGraph(MessagesAnnotation, ConfigurationSchema)
   // This means that after `tools` is called, `callModel` node is called next.
   .addEdge("tools", "callModel");
 
-// Finally, we compile it!
-// This compiles it into a graph you can invoke and deploy.
+const checkpointer = PostgresSaver.fromConnString(process.env.DATABASE_URL!);
+
+(async () => {
+  try {
+    await checkpointer.setup();
+    console.log("Database setup complete");
+  } catch (error) {
+    console.error("Failed to setup database:", error);
+  }
+})();
+
 export const graph = workflow.compile({
-  interruptBefore: [], // if you want to update the state before calling the tools
+  checkpointer: checkpointer,
+  interruptBefore: [],
   interruptAfter: [],
 });
