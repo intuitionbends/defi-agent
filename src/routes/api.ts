@@ -18,6 +18,9 @@ export function createApiV1Router(dbService: DatabaseService): Router {
 
   router.get("/pool_yields/suggest", async (req: Request, res: Response, next: NextFunction) => {
     try {
+      const { riskTolerance, maxDrawdown, expectedAPR, capitalSize, investmentTimeframe } =
+        req.query;
+
       const yields = await dbService.getTopAPYPoolYields(Chain.Aptos, 100_000, 3);
 
       res.json(yields);
