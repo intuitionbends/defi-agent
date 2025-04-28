@@ -1,5 +1,5 @@
 import axios, { Axios } from "axios";
-import winston from "winston";
+import * as winston from "winston";
 import { Chain, DataSource, normalizeChain } from "../types/enums";
 import { PoolYield } from "../types/types";
 
