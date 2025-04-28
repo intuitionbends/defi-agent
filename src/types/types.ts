@@ -3,7 +3,8 @@ import { Chain, DataSource } from "./enums";
 export interface AvailableInteraction {
   chain: Chain;
   project: string;
-  sign: string;
+  name: string;
+  args: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -51,7 +52,8 @@ export const anyToAvailableInteraction = (data: any): AvailableInteraction => {
   return {
     chain: data.chain,
     project: data.project,
-    sign: data.sign,
+    name: data.name,
+    args: data.args,
     created_at: data.created_at,
     updated_at: data.updated_at,
   } as AvailableInteraction;

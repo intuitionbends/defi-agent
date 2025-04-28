@@ -45,7 +45,7 @@ export class DatabaseService {
 
     const result = await this.pool.query(
       `
-        INSERT INTO available_interactions (chain, project, sign) VALUES
+        INSERT INTO available_interactions (chain, project, name, args) VALUES
         ${interactions
           .map((_, i) => `($${i * 4 + 1}, $${i * 4 + 2}, $${i * 4 + 3})`)
           .join(", ")}
@@ -53,7 +53,7 @@ export class DatabaseService {
           args = EXCLUDED.args,
           updated_at = NOW()
       `,
-      interactions.map((i) => [i.chain, i.project, i.sign]).flat(),
+      interactions.map((i) => [i.chain, i.project, i.name, i.args]).flat(),
     );
 
     return result.rowCount || 0;
