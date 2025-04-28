@@ -1,5 +1,5 @@
 create table if not exists available_interactions (
-  chain text not null,
+  chain integer not null,
   project varchar not null,
   name varchar not null,
   args jsonb,
