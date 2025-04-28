@@ -23,8 +23,6 @@ export default class GetTopAptosYieldsTool extends StructuredTool {
           connectionString: process.env.DATABASE_URL,
         });
 
-        console.log("Database URL:", process.env.DATABASE_URL);
-
       const logger = winston.createLogger({
         level: 'info',
         format: winston.format.combine(

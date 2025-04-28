@@ -45,11 +45,6 @@ export async function loadChatModel(
       initOptions.modelProvider = "openai"; 
     }
 
-    // console.log("Loading model:", model);
-    // console.log("Provider:", provider);
-    // console.log("BaseURL:", initOptions.baseURL);
-    // console.log("API Key (OpenRouter):", initOptions.apiKey?.slice(0, 10));
-
     return await initChatModel(model, initOptions);
   }
 }

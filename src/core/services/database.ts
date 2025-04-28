@@ -28,12 +28,6 @@ export class DatabaseService {
        LIMIT $3`,
       [chain, minTvlUsd, limit],
     );
-    const { rows } = await this.pool.query('SELECT current_database(), inet_server_addr(), inet_server_port();');
-    console.log("Connected to database:", rows[0]);
-
-    console.log("Query returned rows:", result.rows.length);
-    console.log("Example row:", result.rows[0]);
-
     return result.rows.map(anyToPoolYield);
   }
 
@@ -134,8 +128,6 @@ export class DatabaseService {
           ])
           .flat(),
       );
-
-      console.log("result", result);
       return result.rowCount || 0;
     } catch (error: any) {
       this.logger.error(
