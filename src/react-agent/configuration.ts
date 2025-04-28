@@ -30,5 +30,3 @@ export function ensureConfiguration(
     model: configurable.model ?? "openrouter/openai/gpt-4o-mini",
   };
 }
-
-// openrouter/openai/gpt-4.1
