@@ -8,7 +8,7 @@
     "build": "npm run clean && tsc",
     "clean": "rm -rf dist",
     "langgraph:dev:start": "npx @langchain/langgraph-cli dev --port 2024 --config ./langgraph.json",
-    "langgraph:build": "docker build -t langgraph .Dockerfile.langgraph",
+    "langgraph:build": "docker build -t langgraph Dockerfile.langgraph",
     "dev:start": "ts-node src/main.ts",
     "start": "tsc && node dist/main.js",
     "migrate:up": "npx db-migrate up",
