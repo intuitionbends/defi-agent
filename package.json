@@ -5,8 +5,7 @@
   "packageManager": "npm@10.9.2",
   "scripts": {
     "dev": "npx @langchain/langgraph-cli dev --port 2024 --config ./langgraph.json",
-    "build": "turbo build:internal",
-    "build:internal": "npm run clean && tsc",
+    "build": "npm run clean && tsc",
     "version": "echo $(git rev-list --count HEAD)-$(git rev-parse --short HEAD)",
     "clean": "rm -rf dist",
     "dev:start": "ts-node src/main.ts",
