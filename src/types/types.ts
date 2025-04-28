@@ -1,5 +1,14 @@
 import { Chain, DataSource } from "./enums";
 
+export interface AvailableInteraction {
+  chain: Chain;
+  project: string;
+  name: string;
+  args: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
 export interface PoolYield {
   id?: number;
   originalId: string;
@@ -19,6 +28,7 @@ export interface PoolYield {
   updatedAt: Date;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const anyToPoolYield = (data: any): PoolYield => {
   return {
     originalId: data.original_id,
@@ -35,4 +45,16 @@ export const anyToPoolYield = (data: any): PoolYield => {
     apyPct30d: data.apy_pct_30d ? parseFloat(data.apy_pct_30d) : null,
     tvlUsd: parseFloat(data.tvl_usd),
   } as PoolYield;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const anyToAvailableInteraction = (data: any): AvailableInteraction => {
+  return {
+    chain: data.chain,
+    project: data.project,
+    name: data.name,
+    args: data.args,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+  } as AvailableInteraction;
 };

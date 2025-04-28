@@ -35,8 +35,9 @@ const main = async () => {
   logger.info("start data collector");
 
   const collector = new DataCollector(dbService, logger, defillama);
-  await collector.runOnce(config.chains);
-  // collector.run(config.chains, config.collectionInterval);
+  collector.run(config.chains, config.collectionInterval);
+
+  await new Promise(() => {});
 
   process.exit(0);
 };

@@ -1,18 +1,21 @@
-import { it, expect } from "@jest/globals";
+import { describe, it } from "node:test";
+import assert from "assert";
 import { BaseMessage } from "@langchain/core/messages";
-
 import { graph } from "../../graph.js";
 
-it("Simple runthrough", async () => {
-  const res = await graph.invoke({
-    messages: [
-      {
-        role: "user",
-        content: "What is the current weather in SF?",
-      },
-    ],
+describe("graph", () => {
+  it("Simple runthrough", async () => {
+    const res = await graph.invoke({
+      messages: [
+        {
+          role: "user",
+          content: "What is the current weather in SF?",
+        },
+      ],
+    });
+
+    assert(
+      res.messages.find((message: BaseMessage) => message._getType() === "tool") !== undefined,
+    );
   });
-  expect(
-    res.messages.find((message: BaseMessage) => message._getType() === "tool"),
-  ).toBeDefined();
 });

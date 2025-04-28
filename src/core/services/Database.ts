@@ -1,6 +1,11 @@
 import { Pool } from "pg";
 import winston from "winston";
-import { anyToPoolYield, PoolYield } from "../../types/types";
+import {
+  anyToAvailableInteraction,
+  anyToPoolYield,
+  AvailableInteraction,
+  PoolYield,
+} from "../../types/types";
 import { Chain } from "../../types/enums";
 
 export class DatabaseService {
@@ -10,6 +15,48 @@ export class DatabaseService {
   constructor(pool: Pool, logger: winston.Logger) {
     this.pool = pool;
     this.logger = logger;
+  }
+
+  async getAvailableInteractions(chain: Chain = Chain.Aptos): Promise<AvailableInteraction[]> {
+    const result = await this.pool.query(
+      `SELECT chain, project, name, args FROM available_interactions WHERE chain = $1`,
+      [chain],
+    );
+
+    return result.rows.map(anyToAvailableInteraction);
+  }
+
+  async getAvailableInteractionsByProject(
+    chain: Chain = Chain.Aptos,
+    project: string,
+  ): Promise<AvailableInteraction[]> {
+    const result = await this.pool.query(
+      `SELECT chain, project, name, args FROM available_interactions WHERE chain = $1 AND project = $2`,
+      [chain, project],
+    );
+
+    return result.rows.map(anyToAvailableInteraction);
+  }
+
+  async upsertAvailableInteractions(interactions: AvailableInteraction[]): Promise<number> {
+    if (interactions.length === 0) {
+      return 0;
+    }
+
+    const result = await this.pool.query(
+      `
+        INSERT INTO available_interactions (chain, project, name, args) VALUES
+        ${interactions
+          .map((_, i) => `($${i * 4 + 1}, $${i * 4 + 2}, $${i * 4 + 3})`)
+          .join(", ")}
+        ON CONFLICT (chain, project, name) DO UPDATE SET
+          args = EXCLUDED.args,
+          updated_at = NOW()
+      `,
+      interactions.map((i) => [i.chain, i.project, i.name, i.args]).flat(),
+    );
+
+    return result.rowCount || 0;
   }
 
   async getTopAPYPoolYields(

@@ -5,15 +5,15 @@
   "packageManager": "npm@10.9.2",
   "scripts": {
     "dev": "npx @langchain/langgraph-cli dev --port 2024 --config ./langgraph.json",
-    "build": "npm run clean && tsc",
     "version": "echo $(git rev-list --count HEAD)-$(git rev-parse --short HEAD)",
+    "build": "npm run clean && tsc",
     "clean": "rm -rf dist",
     "dev:start": "ts-node src/main.ts",
     "start": "tsc && node dist/main.js",
     "migrate:up": "npx db-migrate up",
-    "migrate:create": "npx db-migrate create",
-    "migrate:down": "npx db-migrate down -c",
-    "migrate:clean": "npx db-migrate down -c 100",
+    "migrate:create": "npx db-migrate create $npm_config_name --sql-file",
+    "migrate:down": "npx db-migrate down -c $npm_config_count",
+    "migrate:clean": "npx db-migrate down -c 1000",
     "docker:build": "docker build -t defi-agent:$(npm run version -s) -f Dockerfile .",
     "docker:push": "docker tag defi-agent:$(npm run version -s) 674734398360.dkr.ecr.ap-southeast-1.amazonaws.com/delaunch/defi-agent:$(npm run version -s) && docker push 674734398360.dkr.ecr.ap-southeast-1.amazonaws.com/delaunch/defi-agent:$(npm run version -s)",
     "docker:build_push": "npm run docker:build && npm run docker:push"
@@ -22,7 +22,6 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@elastic/elasticsearch": "^8.17.1",
     "@intuition-bends/common-js": "^1.2.0",
     "@jest/globals": "^29.7.0",
     "@langchain/anthropic": "^0.3.15",
@@ -30,11 +29,9 @@
     "@langchain/community": "^0.3.41",
     "@langchain/core": "^0.3.43",
     "@langchain/langgraph": "^0.2.63",
+    "@langchain/langgraph-checkpoint-postgres": "^0.0.4",
     "@langchain/mongodb": "^0.1.0",
     "@langchain/openai": "^0.4.4",
-    "@langchain/pinecone": "^0.2.0",
-    "@pinecone-database/pinecone": "^5.1.1",
-    "@supabase/supabase-js": "^2.49.1",
     "axios": "^1.8.4",
     "db-migrate": "^0.11.14",
     "db-migrate-pg": "^1.5.2",
@@ -51,9 +48,6 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.0",
-    "@eslint/js": "^9.22.0",
-    "@jest/globals": "^29.7.0",
     "@types/axios": "^0.14.4",
     "@types/dotenv": "^8.2.3",
     "@types/express": "^5.0.0",
@@ -62,16 +56,7 @@
     "@types/uuid": "^10.0.0",
     "@types/winston": "^2.4.4",
     "@types/yargs": "^17.0.33",
-    "@typescript-eslint/eslint-plugin": "^8.26.1",
-    "@typescript-eslint/parser": "^8.26.1",
-    "eslint": "^9.19.0",
-    "eslint-config-prettier": "^10.1.1",
-    "eslint-plugin-import": "^2.31.0",
-    "eslint-plugin-no-instanceof": "^1.0.1",
-    "eslint-plugin-prettier": "^5.2.3",
-    "globals": "^15.14.0",
     "prettier": "^3.3.3",
-    "supabase": "^2.15.8",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.1",
     "turbo": "latest",
@@ -87,6 +72,7 @@
     "@smithy/is-array-buffer": "^2.2.0",
     "@smithy/util-buffer-from": "^2.2.0",
     "@smithy/util-uri-escape": "^2.2.0",
-    "@smithy/util-middleware": "^2.2.0"
+    "@smithy/util-middleware": "^2.2.0",
+    "globals": "^16.0.0"
   }
 }
