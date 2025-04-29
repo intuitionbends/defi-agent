@@ -9,6 +9,34 @@ export interface AvailableInteraction {
   updated_at: Date;
 }
 
+export interface MappingInput {
+  chain?: Chain;
+  riskTolerance: RiskTolerance;
+  maxDrawdown: number;
+  expectedAPR: number;
+  capitalSize: number; // TODO: USDT/ USDC
+  investmentTimeframe: number;
+  assetSymbol: string;
+  limit?: number;
+}
+
+// Interface for yield-suggestion pipeline
+export interface UserPreferences {
+  riskTolerance: RiskTolerance;
+  maxDrawdown: number;
+  expectedAPR: number;
+  capitalSize: number;
+  investmentTimeframe: number;
+  assetSymbol: string;
+}
+
+export enum RiskTolerance {
+  Low = "low",
+  Medium = "medium",
+  High = "high",
+}
+
+
 export interface PoolYield {
   id?: number;
   originalId: string;
@@ -26,12 +54,6 @@ export interface PoolYield {
   tvlUsd: number;
   createdAt: Date;
   updatedAt: Date;
-}
-
-export enum RiskTolerance {
-  Low = "low",
-  Medium = "medium",
-  High = "high",
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

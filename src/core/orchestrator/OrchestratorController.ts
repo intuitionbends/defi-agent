@@ -2,17 +2,7 @@ import { MappingModule } from "../modules/MapperModule";
 import { SentimentModule } from "../modules/SentimentModule";
 import { InsightAgent, InsightAgentOutput } from "../../agents/agent/InsightAgent";
 import { DatabaseService } from "../services/Database";
-import { Chain } from "../../types/enums";
-import { RiskTolerance } from "../../types/types";
-
-interface UserPreferences {
-  riskTolerance: RiskTolerance;
-  maxDrawdown: number;
-  expectedAPR: number;
-  capitalSize: number;
-  investmentTimeframe: number;
-  assetSymbol: string;
-}
+import { UserPreferences } from "../../types/types";
 
 export class OrchestratorController {
   private mapper: MappingModule;
