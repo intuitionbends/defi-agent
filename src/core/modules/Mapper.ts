@@ -31,7 +31,7 @@ export class MappingModule {
       limit = 5
     } = input;
 
-    // Later: you may refine logic using drawdown + timeframe
+    // TODO: Implement maxDrawdown and investmentTimeframe filtering
     const pools = await this.dbService.getQualifiedPoolYields(
       chain,
       riskTolerance,
