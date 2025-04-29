@@ -6,6 +6,9 @@ import { createLogger } from "@intuition-bends/common-js";
 import GetTopAptosYieldsTool from "./tools/YieldAnalyserTool";
 import { Pool } from "pg";
 import { DatabaseService } from "../core/services/Database";
+import { CheckAvailableInteractionTool } from "./tools/CheckAvailableInteractionTool";
+import dotenv from "dotenv";
+dotenv.config();
 
 const logger = createLogger("getTopAptosYieldsAgent");
 
@@ -17,6 +20,8 @@ const databaseService = new DatabaseService(pool, logger);
 
 const getTopAptosYields = new GetTopAptosYieldsTool(logger, databaseService);
 
+const checkAvailableInteraction = new CheckAvailableInteractionTool(databaseService);
+
 /**
  * Export an array of all available tools
  * Add new tools to this array to make them available to the agent
@@ -26,4 +31,4 @@ const getTopAptosYields = new GetTopAptosYieldsTool(logger, databaseService);
  * See https://js.langchain.com/docs/how_to/custom_tools/#tool-function for more information.
  */
 
-export const TOOLS = [getTopAptosYields];
+export const TOOLS = [getTopAptosYields, checkAvailableInteraction];

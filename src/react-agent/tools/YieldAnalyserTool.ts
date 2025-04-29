@@ -4,14 +4,11 @@ import { PoolYield } from "../../types/types.js";
 import { DatabaseService } from "../../core/services/Database";
 import winston from "winston";
 import { Chain } from "../../types/enums.js";
-import dotenv from "dotenv";
 import { formatNumberReadable } from "@intuition-bends/common-js";
-dotenv.config();
 
 export default class GetTopAptosYieldsTool extends StructuredTool {
   public name = "getTopAptosYields";
-  public description =
-    "Returns the top yield opportunities on the Aptos chain. You can optionally filter by a category (project name).";
+  public description = "Returns the top yield opportunities on the Aptos chain. You can optionally filter by a category (project name).";
 
   public schema = z.object({
     limit: z.number().nullable().default(5),
@@ -28,19 +25,10 @@ export default class GetTopAptosYieldsTool extends StructuredTool {
     this.databaseService = databaseService;
   }
 
-  async _call({
-    limit,
-    category,
-  }: {
-    limit: number | null;
-    category: string | null;
-  }): Promise<string> {
+  async _call({limit, category }: { limit: number | null; category: string | null; }): Promise<string> {
     try {
-      let yields: PoolYield[] = await this.databaseService.getTopAPYPoolYields(
-        Chain.Aptos,
-        100_000,
-        limit || 5,
-      );
+      let yields: PoolYield[] = await this.databaseService.getTopAPYPoolYields( Chain.Aptos, 100_000, limit || 5);
+
       if (!yields) {
         return "No yields found.";
       }
