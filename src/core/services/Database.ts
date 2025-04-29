@@ -36,6 +36,8 @@ export class DatabaseService {
       [chain, project],
     );
 
+    console.log("Available interactions:", result.rows);
+
     return result.rows.map(anyToAvailableInteraction);
   }
 
@@ -56,6 +58,7 @@ export class DatabaseService {
     );
 
     return result.rowCount || 0;
+
   }
 
   async getTopAPYPoolYields(
