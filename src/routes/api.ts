@@ -21,6 +21,7 @@ export function createApiV1Router(dbService: DatabaseService): Router {
     try {
       // TODO: update default values
       const {
+        chain = Chain.Aptos,
         riskTolerance = RiskTolerance.Low,
         maxDrawdown = "0.2",
         asset = "USDT",
@@ -29,7 +30,7 @@ export function createApiV1Router(dbService: DatabaseService): Router {
       } = req.query;
 
       const yields = await dbService.getQualifiedPoolYields(
-        Chain.Aptos,
+        chain as Chain,
         riskTolerance as RiskTolerance,
         Number(maxDrawdown),
         asset as string,
