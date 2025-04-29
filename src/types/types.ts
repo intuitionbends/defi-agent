@@ -28,6 +28,12 @@ export interface PoolYield {
   updatedAt: Date;
 }
 
+export enum RiskTolerance {
+  Low = "low",
+  Medium = "medium",
+  High = "high",
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const anyToPoolYield = (data: any): PoolYield => {
   return {
