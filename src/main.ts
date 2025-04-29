@@ -13,9 +13,6 @@ import express from "express";
 import { createApiV1Router } from "./routes/api";
 import defaultRouter from "./routes/default";
 
-export const app = express();
-app.use(bodyParser.json());
-
 const main = async () => {
   const logger = createLogger("defi-agent");
   logger.info("connect to postgres");
