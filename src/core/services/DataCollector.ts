@@ -45,23 +45,26 @@ export class DataCollector {
   }
 
   async run(
-    chains: Chain[],
+    chain: Chain,
     poolYieldInterval: number,
     defillamaEnrichedPoolInterval = 24 * 60 * 60 * 1000, // 1 day in milliseconds
   ): Promise<void> {
     this.logger.info(
-      `start data collector for chains: ${chains.join(",")}, scrape every ${poolYieldInterval / 1000} seconds`,
+      `start data collector for chains ${chain}, update pool yields every ${poolYieldInterval / 1000} seconds, 
+        update defillama enriched pool every ${defillamaEnrichedPoolInterval / 1000} seconds`,
     );
 
     scheduleAligned(async () => {
-      await this.updatePoolYields(chains);
+      await this.updatePoolYields([chain]);
     }, poolYieldInterval);
 
-    await this.updatePoolYields([Chain.Aptos]);
-    await this.updateDefillamaEnrichedPools(Chain.Aptos, 100_000, 7);
-
     scheduleAligned(async () => {
-      await this.updateDefillamaEnrichedPools(Chain.Aptos);
+      await this.updateDefillamaEnrichedPools(chain);
     }, defillamaEnrichedPoolInterval);
+  }
+
+  async runOnce(chain: Chain): Promise<void> {
+    await this.updatePoolYields([chain]);
+    await this.updateDefillamaEnrichedPools(chain, 100_000, 10);
   }
 }
