@@ -1,4 +1,4 @@
-// here should be called from the routes (from front end)
+// here should be called from the routes (from api.ts)
 
 // const [pools, sentiment, contracts] = await Promise.all([
 //     mappingModule.getMatchingPools(preferences),

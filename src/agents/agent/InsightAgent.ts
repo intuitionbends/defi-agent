@@ -24,7 +24,7 @@ export interface InsightAgentOutput {
   actions: { pool: string; function: string; contractAddress: string }[];
 }
 
-export class SimpleInsightAgent {
+export class InsightAgent {
   private model: ChatOpenAI;
 
   constructor() {
@@ -35,7 +35,7 @@ export class SimpleInsightAgent {
       configuration: {
         baseURL: "https://openrouter.ai/api/v1",
         defaultHeaders: {
-          "HTTP-Referer": "your-project-url",
+          "HTTP-Referer": "project-url",
           "X-Title": "defi-yield-insight-agent"
         }
       }
@@ -47,8 +47,17 @@ export class SimpleInsightAgent {
 
     const systemPrompt = SYSTEM_PROMPT_TEMPLATE.replace("{system_time}", systemTime);
 
-    const userPrompt = USER_PROMPT_TEMPLATE;
+    const userPrompt = USER_PROMPT_TEMPLATE
+    .replace("{risk_tolerance}", input.preferences.riskTolerance)
+    .replace("{max_drawdown}", input.preferences.maxDrawdown.toString())
+    .replace("{expected_apr}", input.preferences.expectedAPR.toString())
+    .replace("{capital_size}", input.preferences.capitalSize.toString())
+    .replace("{investment_timeframe}", input.preferences.investmentTimeframe.toString())
+    .replace("{pools}", JSON.stringify(input.pools, null, 2))
+    .replace("{sentiment}", input.sentiment || "Unknown")
+    .replace("{contracts}", JSON.stringify(input.contracts || [], null, 2));
 
+    // Call the model with the system and user prompts
     const response = await this.model.call([
       new SystemMessage(systemPrompt),
       new HumanMessage(userPrompt)
