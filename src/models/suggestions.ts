@@ -5,7 +5,9 @@ export interface Suggestion {
   walletAddress: string,
   summary: string,
   actions: Action[],
-  status: SuggestionStatus
+  status: SuggestionStatus,
+  createdAt: Date,
+  updatedAt: Date,
 }
 
 enum SuggestionStatus {

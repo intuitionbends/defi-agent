@@ -12,6 +12,8 @@ import { DefiLlama } from "./data-sources/defillama";
 import express from "express";
 import { createApiV1Router } from "./routes/api";
 import defaultRouter from "./routes/default";
+import { SuggestionService } from "./services/suggestions";
+import { ActionService } from "./services/actions";
 
 export const app = express();
 app.use(bodyParser.json());
@@ -38,6 +40,8 @@ const main = async () => {
   }
 
   const dbService = new DatabaseService(pool, logger);
+  const suggestionService = new SuggestionService(pool);
+  const actionService = new ActionService(pool);
 
   logger.info("start data collector");
 
@@ -47,7 +51,7 @@ const main = async () => {
   const app = express();
 
   app.use("", defaultRouter);
-  app.use("/api/v1", createApiV1Router(dbService));
+  app.use("/api/v1", createApiV1Router(dbService, suggestionService, actionService));
 
   const server = app.listen(config.port, () => {
     logger.info(`listening on port ${config.port}`);
