@@ -15,7 +15,7 @@ export class DataCollector {
     this.defillama = defillama;
   }
 
-  async runOnce(chains: Chain[]): Promise<void> {
+  async updatePoolYields(chains: Chain[]): Promise<void> {
     try {
       const yields = await this.defillama.getPoolYields(chains);
       const upserted = await this.dbService.upsertPoolYields(yields);
@@ -26,13 +26,42 @@ export class DataCollector {
     }
   }
 
-  run(chains: Chain[], interval: number): void {
+  async updateDefillamaEnrichedPools(chain: Chain, min_tvl = 100_000, limit = 10): Promise<void> {
+    try {
+      const poolYields = await this.dbService.getTopAPYPoolYields(chain, min_tvl, limit);
+
+      const enrichedPools = await Promise.all(
+        poolYields.map((y) => this.defillama.getEnrichedPool(y.originalId)),
+      );
+
+      const upserted = await this.dbService.upsertDefillamaEnrichedPools(
+        enrichedPools.filter((pool) => pool !== null),
+      );
+
+      this.logger.info(`upserted ${upserted} enriched pools into DB`);
+    } catch (error) {
+      this.logger.error(`run: ${error}`);
+    }
+  }
+
+  async run(
+    chains: Chain[],
+    poolYieldInterval: number,
+    defillamaEnrichedPoolInterval = 24 * 60 * 60 * 1000, // 1 day in milliseconds
+  ): Promise<void> {
     this.logger.info(
-      `start data collector for chains: ${chains.join(", ")}, scrape every ${interval / 1000} seconds`,
+      `start data collector for chains: ${chains.join(",")}, scrape every ${poolYieldInterval / 1000} seconds`,
     );
 
     scheduleAligned(async () => {
-      await this.runOnce(chains);
-    }, interval);
+      await this.updatePoolYields(chains);
+    }, poolYieldInterval);
+
+    await this.updatePoolYields([Chain.Aptos]);
+    await this.updateDefillamaEnrichedPools(Chain.Aptos, 100_000, 7);
+
+    scheduleAligned(async () => {
+      await this.updateDefillamaEnrichedPools(Chain.Aptos);
+    }, defillamaEnrichedPoolInterval);
   }
 }

@@ -42,7 +42,7 @@ const main = async () => {
   logger.info("start data collector");
 
   const collector = new DataCollector(dbService, logger, defillama);
-  collector.run(config.chains, config.collectionInterval);
+  await collector.run(config.chains, config.collectionInterval);
 
   const app = express();
 
