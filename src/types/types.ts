@@ -33,7 +33,7 @@ export const anyToPoolYield = (data: any): PoolYield => {
   return {
     originalId: data.original_id,
     dataSource: data.data_source,
-    chain: data.chain,
+    chain: data.chain as Chain,
     symbol: data.symbol,
     project: data.project,
     apy: parseFloat(data.apy),
