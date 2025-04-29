@@ -5,7 +5,7 @@
 import { createLogger } from "@intuition-bends/common-js";
 import GetTopAptosYieldsTool from "./tools/YieldAnalyserTool";
 import { Pool } from "pg";
-import { DatabaseService } from "../core/services/Database";
+import { DatabaseService } from "../../core/services/Database";
 
 const logger = createLogger("getTopAptosYieldsAgent");
 
