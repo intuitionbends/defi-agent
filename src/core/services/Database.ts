@@ -5,9 +5,10 @@ import {
   anyToPoolYield,
   AvailableInteraction,
   PoolYield,
+  RiskTolerance,
 } from "../../types/types";
-import { Chain } from "../../types/enums";
-import { DefillamaEnrichedPool } from "../../data-sources/defillama";
+import { Chain, DataSource } from "../../types/enums";
+import { DefillamaEnrichedPool, DefiLlama } from "../../data-sources/defillama";
 
 export class DatabaseService {
   private pool: Pool;
@@ -78,22 +79,47 @@ export class DatabaseService {
     return result.rows.map(anyToPoolYield);
   }
 
-  async getAverageApy(): Promise<number | null> {
-    const { rows } = await this.pool.query(`
-      SELECT AVG(apy) as avg_apy
-      FROM pool_yields
-      WHERE chain = 'aptos'
-    `);
-    return rows[0]?.avg_apy || null;
-  }
+  async getQualifiedPoolYields(
+    chain: Chain = Chain.Aptos,
+    riskTolerance: RiskTolerance,
+    maxDrawdown: number, // TODO: refine methodology
+    asset: string,
+    assetValueUsd: number,
+    investmentTimeframe: number, // TODO: refine methodology
+    limit = 5,
+  ): Promise<PoolYield[]> {
+    let maxSigma: number;
+    switch (riskTolerance) {
+      case RiskTolerance.Low:
+        maxSigma = 0.15;
+        break;
+      case RiskTolerance.Medium:
+        maxSigma = 0.5;
+        break;
+      case RiskTolerance.High:
+        maxSigma = 5;
+        break;
+      default:
+        throw new Error("invalid risk tolerance");
+    }
 
-  async getTotalTvl(): Promise<number | null> {
-    const { rows } = await this.pool.query(`
-      SELECT SUM(tvl_usd) as total_tvl
-      FROM pool_yields
-      WHERE chain = 'aptos'
-    `);
-    return rows[0]?.total_tvl || null;
+    const result = await this.pool.query(
+      `SELECT y.original_id, y.data_source, y.chain, y.symbol, y.project, y.apy, y.apy_base, y.apy_base_7d, 
+              y.apy_mean_30d, y.apy_pct_1d, y.apy_pct_7d, y.apy_pct_30d, y.tvl_usd 
+       FROM pool_yields y
+       JOIN defillama_enriched_pools p
+       ON y.original_id = p.pool
+       WHERE y.chain = $1 
+         AND p.sigma < $2
+         AND y.symbol LIKE '%' || $3 || '%'
+         AND y.tvl_usd > $4
+         AND y.data_source = $5
+       ORDER BY y.apy DESC 
+       LIMIT $6`,
+      [chain, maxSigma, asset, assetValueUsd * 100, DataSource.Defillama, limit],
+    );
+
+    return result.rows.map(anyToPoolYield);
   }
 
   async getBestPoolYieldByAsset(chain: Chain = Chain.Aptos): Promise<PoolYield[]> {

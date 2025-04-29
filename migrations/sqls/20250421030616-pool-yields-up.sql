@@ -1,7 +1,7 @@
 create table if not exists pool_yields (
   original_id varchar,
   data_source integer,
-  chain varchar not null,
+  chain integer not null,
   symbol varchar not null,
   project varchar not null,
   apy numeric,
