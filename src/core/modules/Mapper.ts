@@ -1,6 +1,6 @@
 import { DatabaseService } from "../services/Database";
-import { RiskTolerance, Chain } from "../../types/enums";
-import { PoolYield } from "../../types/types";
+import { RiskTolerance, PoolYield } from "../../types/types";
+import { Chain } from "../../types/enums";
 
 interface MappingInput {
   chain?: Chain;
