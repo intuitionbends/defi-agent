@@ -5,9 +5,9 @@ import { RiskTolerance } from "../types/types";
 import { SuggestionService } from "../services/suggestions";
 import { ActionService } from "../services/actions";
 import { Suggestion, SuggestionStatus } from "../models/suggestions";
+import { ActionStatus } from "../models/actions";
 
 export function createApiV1Router(
-  dbService: DatabaseService,
   suggestionService: SuggestionService,
   actionService: ActionService,
 ): Router {
@@ -72,13 +72,23 @@ export function createApiV1Router(
       const suggestion: Suggestion = {
         walletAddress,
         summary: "mock suggestion",
-        actions: [],
+        actions: [
+          {
+            sequenceNumber: 1,
+            name: "swap",
+            walletAddress,
+            txData: "test",
+            status: ActionStatus.New,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ],
         status: SuggestionStatus.New,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
-      await suggestionService.upsertSuggestions([suggestion]);
+      await suggestionService.insertSuggestion(suggestion);
 
       res.json(suggestion);
     } catch (error) {

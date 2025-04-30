@@ -32,26 +32,42 @@ export class SuggestionService extends BaseService {
     return result.rows.map(anyToSuggestion);
   }
 
-  async upsertSuggestions(suggestions: Suggestion[]): Promise<number> {
+  async insertSuggestion(suggestion: Suggestion): Promise<number> {
+    await this.pool.query("BEGIN");
+
     const result = await this.pool.query(
-      `INSERT INTO suggestions (id, wallet_address, summary, actions, status, created_at, updated_at) 
-       VALUES ${suggestions.map((_, i) => `($${i * 7 + 1}, $${i * 7 + 2}, $${i * 7 + 3}, $${i * 7 + 4}, $${i * 7 + 5}, $${i * 7 + 6}, $${i * 7 + 7})`).join(", ")}
-       ON CONFLICT (id) DO UPDATE SET 
-       wallet_address = EXCLUDED.wallet_address,
-       summary = EXCLUDED.summary,
-       actions = EXCLUDED.actions,
-       status = EXCLUDED.status,
-       updated_at = EXCLUDED.updated_at`,
-      suggestions.flatMap((suggestion) => [
-        suggestion.id,
-        suggestion.walletAddress,
-        suggestion.summary,
-        suggestion.actions,
-        suggestion.status,
-        suggestion.createdAt || new Date(),
-        suggestion.updatedAt || new Date(),
-      ]),
+      `INSERT INTO suggestions (wallet_address, summary, status) 
+       VALUES ($1, $2, $3)
+        RETURNING id
+       `,
+      [suggestion.walletAddress, suggestion.summary, suggestion.status],
     );
+
+    suggestion.id = result.rows[0].id;
+
+    // Insert actions for this suggestion
+    if (suggestion.actions && suggestion.actions.length > 0) {
+      const actionResult = await this.pool.query(
+        `INSERT INTO actions (suggestion_id, sequence_number, name, wallet_address, tx_data, status)
+       VALUES ${suggestion.actions.map((_, i) => `($1, $${i * 5 + 2}, $${i * 5 + 3}, $${i * 5 + 4}, $${i * 5 + 5}, $${i * 5 + 6})`).join(", ")}`,
+        [
+          suggestion.id,
+          ...suggestion.actions.flatMap((action, index) => [
+            index + 1, // sequence_number
+            action.name,
+            suggestion.walletAddress,
+            action.txData,
+            action.status,
+          ]),
+        ],
+      );
+
+      if (actionResult.rowCount === 0) {
+        throw new Error("insert actions");
+      }
+    }
+
+    await this.pool.query("COMMIT");
 
     return result.rowCount || 0;
   }

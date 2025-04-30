@@ -4,6 +4,7 @@ CREATE TABLE actions (
   wallet_address TEXT NOT NULL,
   name TEXT NOT NULL,
   tx_data TEXT NOT NULL,
+  status SMALLINT NOT NULL DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (suggestion_id, sequence_number)

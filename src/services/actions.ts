@@ -5,7 +5,7 @@ export class ActionService extends BaseService {
   async getByKey(suggestionId: number, sequenceNumber: number): Promise<Action | null> {
     const result = await this.pool.query(
       `
-      SELECT * FROM suggestions
+      SELECT * FROM actions
       WHERE suggestion_id = $1 AND sequence_number = $2
     `,
       [suggestionId, sequenceNumber],
@@ -15,7 +15,7 @@ export class ActionService extends BaseService {
       return null;
     }
 
-    return result.rows[0].map(anyToAction);
+    return anyToAction(result.rows[0]);
   }
 }
 
@@ -28,5 +28,7 @@ const anyToAction = (data: any): Action => {
     walletAddress: data.wallet_address,
     txData: data.tx_data,
     status: data.status,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
   };
 };
