@@ -4,6 +4,7 @@ import { Chain } from "../types/enums";
 import { RiskTolerance } from "../types/types";
 import { SuggestionService } from "../services/suggestions";
 import { ActionService } from "../services/actions";
+import { Suggestion, SuggestionStatus } from "../models/suggestions";
 
 export function createApiV1Router(
   dbService: DatabaseService,
@@ -17,6 +18,11 @@ export function createApiV1Router(
       const { id } = req.params;
 
       const suggestion = await suggestionService.getById(Number(id));
+
+      if (!suggestion) {
+        res.status(404).json({ error: "no suggestion found" });
+        return;
+      }
 
       res.json(suggestion);
     } catch (error) {
@@ -53,19 +59,26 @@ export function createApiV1Router(
         investmentTimeframe = "30",
       } = req.body;
 
-      const yields = await dbService.getQualifiedPoolYields(
-        chain as Chain,
-        riskTolerance as RiskTolerance,
-        Number(maxDrawdown),
-        asset as string,
-        Number(assetValueUsd),
-        Number(investmentTimeframe),
-      );
+      // const yields = await dbService.getQualifiedPoolYields(
+      //   chain as Chain,
+      //   riskTolerance as RiskTolerance,
+      //   Number(maxDrawdown),
+      //   asset as string,
+      //   Number(assetValueUsd),
+      //   Number(investmentTimeframe),
+      // );
 
-      // TODO; add langchain to generate suggestions
-      const suggestion = {};
+      // TODO; add langchain to generate suggestions (replace mock)
+      const suggestion: Suggestion = {
+        walletAddress,
+        summary: "mock suggestion",
+        actions: [],
+        status: SuggestionStatus.New,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
 
-      const result = await suggestionService.upsertSuggestions([]);
+      await suggestionService.upsertSuggestions([suggestion]);
 
       res.json(suggestion);
     } catch (error) {

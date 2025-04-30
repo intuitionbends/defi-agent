@@ -2,7 +2,7 @@ import { BaseService } from "./base";
 import { Suggestion } from "../models/suggestions";
 
 export class SuggestionService extends BaseService {
-  async getById(id: number): Promise<Suggestion[]> {
+  async getById(id: number): Promise<Suggestion | null> {
     const result = await this.pool.query(
       `
       SELECT * FROM suggestions
@@ -11,7 +11,11 @@ export class SuggestionService extends BaseService {
       [id],
     );
 
-    return result.rows.map(anyToSuggestion);
+    if (result.rowCount === 0) {
+      return null;
+    }
+
+    return anyToSuggestion(result.rows[0]);
   }
 
   async getByWalletAddress(walletAddress: string, limit: number = 10): Promise<Suggestion[]> {

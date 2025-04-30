@@ -1,7 +1,7 @@
 import { Action } from "./actions";
 
 export interface Suggestion {
-  id: number,
+  id?: number,
   walletAddress: string,
   summary: string,
   actions: Action[],
@@ -10,7 +10,7 @@ export interface Suggestion {
   updatedAt: Date,
 }
 
-enum SuggestionStatus {
+export enum SuggestionStatus {
   New = 0,
   Completed = 1,
   Cancelled = 2,

@@ -1,5 +1,4 @@
 import { Pool } from "pg";
-import bodyParser from "body-parser";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -9,14 +8,23 @@ import { DataCollector } from "./core/services/DataCollector";
 import { loadConfig } from "./config";
 import { DatabaseService } from "./core/services/Database";
 import { DefiLlama } from "./data-sources/defillama";
-import express from "express";
+import express, { Request, Response, ErrorRequestHandler, NextFunction } from "express";
 import { createApiV1Router } from "./routes/api";
 import defaultRouter from "./routes/default";
 import { SuggestionService } from "./services/suggestions";
 import { ActionService } from "./services/actions";
 
-export const app = express();
-app.use(bodyParser.json());
+const errorHandler: ErrorRequestHandler = (
+  err: Error,
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  // Handle the error
+  res.status(500).json({ error: err.message });
+};
+
+const app = express();
 
 const main = async () => {
   const logger = createLogger("defi-agent");
@@ -49,9 +57,11 @@ const main = async () => {
   await collector.run(config.chains, config.collectionInterval);
 
   const app = express();
+  app.use(express.json());
 
   app.use("", defaultRouter);
   app.use("/api/v1", createApiV1Router(dbService, suggestionService, actionService));
+  app.use(errorHandler);
 
   const server = app.listen(config.port, () => {
     logger.info(`listening on port ${config.port}`);
