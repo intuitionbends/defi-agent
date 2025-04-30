@@ -13,9 +13,6 @@ import express from "express";
 import { createApiV1Router } from "./routes/api";
 import defaultRouter from "./routes/default";
 
-export const app = express();
-app.use(bodyParser.json());
-
 const main = async () => {
   const logger = createLogger("defi-agent");
   logger.info("connect to postgres");
@@ -42,7 +39,9 @@ const main = async () => {
   logger.info("start data collector");
 
   const collector = new DataCollector(dbService, logger, defillama);
-  await collector.run(config.chains, config.collectionInterval);
+  // await collector.run(config.chains, config.collectionInterval);
+  await collector.runOnce(config.chains);
+
 
   const app = express();
 

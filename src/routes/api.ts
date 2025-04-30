@@ -1,10 +1,14 @@
 import express, { Router, Request, Response, NextFunction } from "express";
 import { DatabaseService } from "../core/services/Database";
 import { Chain } from "../types/enums";
-import { RiskTolerance } from "../types/types";
+import { RiskTolerance, UserPreferences } from "../types/types";
+import { OrchestratorController } from "../core/orchestrator/OrchestratorController";
+import dotenv from "dotenv";
+dotenv.config();
 
 export function createApiV1Router(dbService: DatabaseService): Router {
   const router = express.Router();
+  const key = process.env.OPENROUTER_API_KEY as string;
 
   router.get("/pool_yields/top", async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -19,29 +23,29 @@ export function createApiV1Router(dbService: DatabaseService): Router {
 
   router.get("/pool_yields/suggest", async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // TODO: update default values
       const {
-        chain = Chain.Aptos,
-        riskTolerance = RiskTolerance.Low,
+        riskTolerance = "Low",
         maxDrawdown = "0.2",
-        asset = "USDT",
+        asset = "APT",
         assetValueUsd = "1000",
-        investmentTimeframe = "30",
+        investmentTimeframe = "6"
       } = req.query;
-
-      const yields = await dbService.getQualifiedPoolYields(
-        chain as Chain,
-        riskTolerance as RiskTolerance,
-        Number(maxDrawdown),
-        asset as string,
-        Number(assetValueUsd),
-        Number(investmentTimeframe),
-      );
-
+  
+      const orchestrator = new OrchestratorController(dbService, key);
+  
+      const preferences: UserPreferences = {
+        chain: Chain.Aptos,
+        riskTolerance: riskTolerance as RiskTolerance,
+        maxDrawdown: Number(maxDrawdown),
+        capitalSize: Number(assetValueUsd),
+        investmentTimeframe: Number(investmentTimeframe),
+        assetSymbol: "APT",
+      };
+  
+      const yields = await orchestrator.run(preferences);
       res.json(yields);
     } catch (error) {
       next(error);
-      return;
     }
   });
 

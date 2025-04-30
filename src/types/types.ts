@@ -9,6 +9,44 @@ export interface AvailableInteraction {
   updated_at: Date;
 }
 
+export interface InsightAgentInput {
+  preferences: {
+    riskTolerance: string;
+    maxDrawdown: number;
+    capitalSize: number;
+    investmentTimeframe: number;
+  };
+  pools: any[];
+  sentiment?: string;
+  contracts?: any[];
+}
+
+export interface MappingInput {
+  chain?: Chain;
+  riskTolerance: RiskTolerance;
+  maxDrawdown: number;
+  capitalSize: number; // TODO: USDT/ USDC
+  investmentTimeframe: number;
+  assetSymbol: string;
+  limit?: number;
+}
+
+// Interface for yield-suggestion pipeline
+export interface UserPreferences {
+  chain: Chain;
+  riskTolerance: RiskTolerance;
+  maxDrawdown: number;
+  capitalSize: number;
+  investmentTimeframe: number;
+  assetSymbol: string;
+}
+
+export enum RiskTolerance {
+  Low = "Low",
+  Medium = "Medium",
+  High = "High",
+}
+
 export interface PoolYield {
   id?: number;
   originalId: string;
@@ -27,13 +65,6 @@ export interface PoolYield {
   createdAt: Date;
   updatedAt: Date;
 }
-
-export enum RiskTolerance {
-  Low = "low",
-  Medium = "medium",
-  High = "high",
-}
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const anyToPoolYield = (data: any): PoolYield => {
   return {

@@ -1,9 +1,9 @@
 import { StructuredTool } from "langchain/tools";
 import { z } from "zod";
-import { PoolYield } from "../../types/types.js";
-import { DatabaseService } from "../../core/services/Database";
+import { PoolYield } from "../../../types/types";
+import { DatabaseService } from "../../../core/services/Database";
 import winston from "winston";
-import { Chain } from "../../types/enums.js";
+import { Chain } from "../../../types/enums";
 import dotenv from "dotenv";
 import { formatNumberReadable } from "@intuition-bends/common-js";
 dotenv.config();
