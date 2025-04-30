@@ -1,7 +1,8 @@
 import express, { Router, Request, Response, NextFunction } from "express";
 import { DatabaseService } from "../core/services/Database";
 import { Chain } from "../types/enums";
-import { RiskTolerance } from "../types/types";
+import { RiskTolerance, UserPreferences } from "../types/types";
+import { OrchestratorController } from "../core/orchestrator/OrchestratorController";
 
 export function createApiV1Router(dbService: DatabaseService): Router {
   const router = express.Router();
@@ -19,28 +20,30 @@ export function createApiV1Router(dbService: DatabaseService): Router {
 
   router.get("/pool_yields/suggest", async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // TODO: update default values
       const {
-        riskTolerance = RiskTolerance.Low,
+        riskTolerance = "Low",
         maxDrawdown = "0.2",
-        asset = "USDT",
+        asset = "APT",
         assetValueUsd = "1000",
-        investmentTimeframe = "30",
+        investmentTimeframe = "6"
       } = req.query;
-
-      const yields = await dbService.getQualifiedPoolYields(
-        Chain.Aptos,
-        riskTolerance as RiskTolerance,
-        Number(maxDrawdown),
-        asset as string,
-        Number(assetValueUsd),
-        Number(investmentTimeframe),
-      );
-
+  
+      const orchestrator = new OrchestratorController(dbService);
+  
+      const preferences: UserPreferences = {
+        chain: Chain.Aptos,
+        riskTolerance: riskTolerance as RiskTolerance,
+        maxDrawdown: Number(maxDrawdown),
+        expectedAPR: 0.1,
+        capitalSize: Number(assetValueUsd),
+        investmentTimeframe: Number(investmentTimeframe),
+        assetSymbol: "APT",
+      };
+  
+      const yields = await orchestrator.run(preferences);
       res.json(yields);
     } catch (error) {
       next(error);
-      return;
     }
   });
 

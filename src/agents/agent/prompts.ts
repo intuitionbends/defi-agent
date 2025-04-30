@@ -2,9 +2,10 @@
  * Default prompts used by the agent.
  */
 
-export const SYSTEM_PROMPT_TEMPLATE = `You are a helpful AI assistant.
+export const SYSTEM_PROMPT_TEMPLATE = `You are a helpful DeFi investment assistant.
+System time: {system_time}
 
-System time: {system_time}`;
+You must respond ONLY with valid JSON that conforms to the required schema. Do not explain or wrap your response.`;
 
 
 export const USER_PROMPT_TEMPLATE = `
@@ -25,16 +26,18 @@ Smart Contract Info:
 {contracts}
 
 Instructions:
-Please recommend the top pools and explain your decision.
-Output a JSON with:
+You are a JSON-only API. Do not include any natural language, markdown, or explanations. 
+
+Output ONLY a valid JSON object in the exact following format:
+
 {
   "recommendedPools": [...],
-  "insight": "...",
+  "insight": "Your explanation goes here...",
   "actions": [
     {
-      "pool": "...",
-      "function": "...",
-      "contractAddress": "..."
+      "pool": "pool_id_here",
+      "function": "stake",
+      "contractAddress": "0x..."
     }
   ]
 }

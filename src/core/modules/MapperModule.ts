@@ -1,17 +1,6 @@
 import { DatabaseService } from "../services/Database";
-import { RiskTolerance, PoolYield } from "../../types/types";
+import { RiskTolerance, PoolYield, UserPreferences, MappingInput } from "../../types/types";
 import { Chain } from "../../types/enums";
-
-interface MappingInput {
-  chain?: Chain;
-  riskTolerance: RiskTolerance;
-  maxDrawdown: number;
-  expectedAPR: number;
-  capitalSize: number; // TODO: USDT/ USDC
-  investmentTimeframe: number;
-  assetSymbol: string;
-  limit?: number;
-}
 
 export class MappingModule {
   private dbService: DatabaseService;
@@ -41,6 +30,8 @@ export class MappingModule {
       investmentTimeframe,
       limit
     );
+
+    console.log("Qualified pools:", pools);
 
     // Optional post-filtering
     const filtered = pools.filter(pool => pool.apy >= input.expectedAPR * 100);

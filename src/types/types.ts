@@ -22,6 +22,7 @@ export interface MappingInput {
 
 // Interface for yield-suggestion pipeline
 export interface UserPreferences {
+  chain: Chain;
   riskTolerance: RiskTolerance;
   maxDrawdown: number;
   expectedAPR: number;
@@ -31,9 +32,9 @@ export interface UserPreferences {
 }
 
 export enum RiskTolerance {
-  Low = "low",
-  Medium = "medium",
-  High = "high",
+  Low = "Low",
+  Medium = "Medium",
+  High = "High",
 }
 
 

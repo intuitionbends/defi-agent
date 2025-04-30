@@ -18,10 +18,11 @@ export class OrchestratorController {
   public async run(preferences: UserPreferences): Promise<InsightAgentOutput> {
     try {
       // Step 1: Run all modules in parallel
-      const [pools, sentiment, contracts] = await Promise.all([
+      console.log("Running modules in parallel...");
+      const [pools, sentiment] = await Promise.all([
         this.mapper.getQualifiedPools(preferences),
         this.sentimentModule.getMarketSentiment(),
-        this.fetchAvailableContractInteractions(preferences.assetSymbol)
+        // Contracts module can be added here
       ]);
 
       // Step 2: Prepare agent input
@@ -29,7 +30,7 @@ export class OrchestratorController {
         preferences,
         pools,
         sentiment,
-        contracts
+        // contracts
       };
 
       // Step 3: Call AI agent
@@ -42,15 +43,4 @@ export class OrchestratorController {
     }
   }
 
-  // Placeholder — replace with actual contract-checker integration
-  private async fetchAvailableContractInteractions(assetSymbol: string): Promise<any[]> {
-    // TODO: Call actual smart contract checker module
-    return [
-      {
-        pool: `${assetSymbol.toLowerCase()}-staking`,
-        function: "stake",
-        contractAddress: "0xABCDEF..."
-      }
-    ];
-  }
 }
