@@ -37,7 +37,6 @@ export enum RiskTolerance {
   High = "High",
 }
 
-
 export interface PoolYield {
   id?: number;
   originalId: string;
