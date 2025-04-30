@@ -9,11 +9,22 @@ export interface AvailableInteraction {
   updated_at: Date;
 }
 
+export interface InsightAgentInput {
+  preferences: {
+    riskTolerance: string;
+    maxDrawdown: number;
+    capitalSize: number;
+    investmentTimeframe: number;
+  };
+  pools: any[];
+  sentiment?: string;
+  contracts?: any[];
+}
+
 export interface MappingInput {
   chain?: Chain;
   riskTolerance: RiskTolerance;
   maxDrawdown: number;
-  expectedAPR: number;
   capitalSize: number; // TODO: USDT/ USDC
   investmentTimeframe: number;
   assetSymbol: string;
@@ -25,7 +36,6 @@ export interface UserPreferences {
   chain: Chain;
   riskTolerance: RiskTolerance;
   maxDrawdown: number;
-  expectedAPR: number;
   capitalSize: number;
   investmentTimeframe: number;
   assetSymbol: string;

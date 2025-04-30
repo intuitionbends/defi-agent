@@ -3,10 +3,12 @@ import { DatabaseService } from "../core/services/Database";
 import { Chain } from "../types/enums";
 import { RiskTolerance, UserPreferences } from "../types/types";
 import { OrchestratorController } from "../core/orchestrator/OrchestratorController";
-
+import dotenv from "dotenv";
+dotenv.config();
 
 export function createApiV1Router(dbService: DatabaseService): Router {
   const router = express.Router();
+  const key = process.env.OPENROUTER_API_KEY as string;
 
   router.get("/pool_yields/top", async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -29,13 +31,12 @@ export function createApiV1Router(dbService: DatabaseService): Router {
         investmentTimeframe = "6"
       } = req.query;
   
-      const orchestrator = new OrchestratorController(dbService);
+      const orchestrator = new OrchestratorController(dbService, key);
   
       const preferences: UserPreferences = {
         chain: Chain.Aptos,
         riskTolerance: riskTolerance as RiskTolerance,
         maxDrawdown: Number(maxDrawdown),
-        expectedAPR: 0.1,
         capitalSize: Number(assetValueUsd),
         investmentTimeframe: Number(investmentTimeframe),
         assetSymbol: "APT",

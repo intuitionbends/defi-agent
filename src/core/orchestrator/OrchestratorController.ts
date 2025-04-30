@@ -9,10 +9,10 @@ export class OrchestratorController {
   private sentimentModule: SentimentModule;
   private agent: InsightAgent;
 
-  constructor(private dbService: DatabaseService) {
+  constructor(private dbService: DatabaseService, key: string) {
     this.mapper = new MappingModule(this.dbService);
     this.sentimentModule = new SentimentModule();
-    this.agent = new InsightAgent();
+    this.agent = new InsightAgent(key);
   }
 
   public async run(preferences: UserPreferences): Promise<InsightAgentOutput> {

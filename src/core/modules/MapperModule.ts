@@ -33,9 +33,6 @@ export class MappingModule {
 
     console.log("Qualified pools:", pools);
 
-    // Optional post-filtering
-    const filtered = pools.filter(pool => pool.apy >= input.expectedAPR * 100);
-
-    return filtered;
+    return pools;
   }
 }

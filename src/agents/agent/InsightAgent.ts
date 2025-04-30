@@ -1,22 +1,7 @@
 import { SYSTEM_PROMPT_TEMPLATE , USER_PROMPT_TEMPLATE } from "./prompts";
 import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-
-import dotenv from "dotenv";
-dotenv.config();
-
-export interface InsightAgentInput {
-  preferences: {
-    riskTolerance: string;
-    maxDrawdown: number;
-    expectedAPR: number;
-    capitalSize: number;
-    investmentTimeframe: number;
-  };
-  pools: any[];
-  sentiment?: string;
-  contracts?: any[];
-}
+import { InsightAgentInput } from "../../types/types";
 
 export interface InsightAgentOutput {
   recommendedPools: any[];
@@ -27,11 +12,11 @@ export interface InsightAgentOutput {
 export class InsightAgent {
   private model: ChatOpenAI;
 
-  constructor() {
+  constructor(key: string) {
     this.model = new ChatOpenAI({
       temperature: 0.3,
       modelName: "openai/gpt-4",
-      openAIApiKey: process.env.OPENROUTER_API_KEY,
+      openAIApiKey: key,
       configuration: {
         baseURL: "https://openrouter.ai/api/v1",
         defaultHeaders: {
@@ -50,7 +35,6 @@ export class InsightAgent {
     const userPrompt = USER_PROMPT_TEMPLATE
     .replace("{risk_tolerance}", input.preferences.riskTolerance)
     .replace("{max_drawdown}", input.preferences.maxDrawdown.toString())
-    .replace("{expected_apr}", input.preferences.expectedAPR.toString())
     .replace("{capital_size}", input.preferences.capitalSize.toString())
     .replace("{investment_timeframe}", input.preferences.investmentTimeframe.toString())
     .replace("{pools}", JSON.stringify(input.pools, null, 2))
