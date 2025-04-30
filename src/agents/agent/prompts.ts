@@ -2,7 +2,8 @@
  * Default prompts used by the agent.
  */
 
-export const SYSTEM_PROMPT_TEMPLATE = `You are a helpful DeFi investment assistant.
+export const SYSTEM_PROMPT_TEMPLATE = `You are a helpful DeFi investment assistant. Give insight based on the information provided. Give as much insight as possible.
+Your task is to analyze the user's preferences, the yield pools, and the market sentiment to provide a recommendation on which pools to invest in.
 System time: {system_time}
 
 You must respond ONLY with valid JSON that conforms to the required schema. Do not explain or wrap your response.`;
@@ -18,6 +19,9 @@ User Preferences:
 
 Yield Pools:
 {pools}
+
+Defillama prediction:
+{predictions}
 
 Market Sentiment:
 {sentiment}
