@@ -68,6 +68,9 @@ export interface PoolYield {
   apyPct7d: number | null;
   apyPct30d: number | null;
   tvlUsd: number;
+  predictedClass: string;
+  predicted_probability: number;
+  binned_confidence: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -87,6 +90,9 @@ export const anyToPoolYield = (data: any): PoolYield => {
     apyPct7d: data.apy_pct_7d ? parseFloat(data.apy_pct_7d) : null,
     apyPct30d: data.apy_pct_30d ? parseFloat(data.apy_pct_30d) : null,
     tvlUsd: parseFloat(data.tvl_usd),
+    predictedClass: data.predicted_class,
+    predicted_probability: data.predicted_probability,
+    binned_confidence: data.binned_confidence,
   } as PoolYield;
 };
 
