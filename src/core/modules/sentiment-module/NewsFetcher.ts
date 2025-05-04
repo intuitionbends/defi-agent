@@ -1,6 +1,8 @@
 import axios from "axios";
 import Parser from "rss-parser";
 import { v4 as uuidv4 } from "uuid";
+import dotenv from "dotenv";
+dotenv.config();
 
 interface NewsItem {
   id: string;
@@ -70,4 +72,13 @@ export class NewsFetcher {
       (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
     );
   }
+}
+
+if (require.main === module) {
+  const fetcher = new NewsFetcher();
+  fetcher.fetchAll().then(news => {
+    console.log("Fetched news:", news);
+  }).catch(err => {
+    console.error("Error fetching news:", err);
+  });
 }
