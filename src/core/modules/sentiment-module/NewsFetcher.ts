@@ -99,6 +99,7 @@ export class NewsFetcher {
   
 }
 
+// For testing and example usage
 if (require.main === module) {
   const fetcher = new NewsFetcher();
   fetcher.fetchAptosNews().then(news => {
