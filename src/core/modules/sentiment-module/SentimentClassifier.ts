@@ -1,6 +1,6 @@
 
 import axios from "axios";
-import { NewsFetcher } from "./NewsFetcher"; // adjust path as needed
+import { NewsFetcher } from "./NewsFetcher"; 
 
 export class SentimentModule {
   private newsFetcher: NewsFetcher;
