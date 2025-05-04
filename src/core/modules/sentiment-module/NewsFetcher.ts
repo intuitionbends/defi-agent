@@ -72,11 +72,36 @@ export class NewsFetcher {
       (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
     );
   }
+
+  filterForAptosNews(items: NewsItem[]): NewsItem[] {
+    const aptosKeywords = [
+      "aptos",
+      "aptos chain",
+      "aptos labs",
+      "aptoslabs",
+      "aptos ecosystem",
+      "apt token",
+      "move language",
+      "aptos staking",
+      "aptos defi"
+    ];
+
+    return items.filter(item => {
+      const text = `${item.title} ${item.summary}`.toLowerCase();
+      return aptosKeywords.some(keyword => text.includes(keyword));
+    });
+  }
+
+  async fetchAptosNews(): Promise<NewsItem[]> {
+    const allNews = await this.fetchAll();
+    return this.filterForAptosNews(allNews);
+  }
+  
 }
 
 if (require.main === module) {
   const fetcher = new NewsFetcher();
-  fetcher.fetchAll().then(news => {
+  fetcher.fetchAptosNews().then(news => {
     console.log("Fetched news:", news);
   }).catch(err => {
     console.error("Error fetching news:", err);
