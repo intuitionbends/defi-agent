@@ -3,16 +3,24 @@ import winston from "winston";
 import { DatabaseService } from "./Database";
 import { DefiLlama } from "../../data-sources/defillama";
 import { Chain } from "../../types/enums";
+import { TransactionBuilder } from "./TransactionBuilder";
 
 export class DataCollector {
   private dbService: DatabaseService;
   private logger: winston.Logger;
   private defillama: DefiLlama;
+  private txBuilder: TransactionBuilder;
 
-  constructor(databaseService: DatabaseService, logger: winston.Logger, defillama: DefiLlama) {
+  constructor(
+    databaseService: DatabaseService,
+    logger: winston.Logger,
+    defillama: DefiLlama,
+    txBuilder: TransactionBuilder,
+  ) {
     this.dbService = databaseService;
     this.logger = logger;
     this.defillama = defillama;
+    this.txBuilder = txBuilder;
   }
 
   async updatePoolYields(chains: Chain[]): Promise<void> {
@@ -39,6 +47,32 @@ export class DataCollector {
       );
 
       this.logger.info(`upserted ${upserted} enriched pools into DB`);
+    } catch (error) {
+      this.logger.error(`run: ${error}`);
+    }
+  }
+
+  async updateYieldActions() {
+    let totalUpserted = 0;
+
+    try {
+      const suggestions = await this.dbService.getYieldSuggestionsLatest();
+
+      for (const suggestion of suggestions) {
+        const yieldActions = await this.txBuilder.buildYieldActionsBySuggestion(suggestion);
+
+        if (!yieldActions) continue;
+
+        const upserted = await this.dbService.insertYieldActions(yieldActions);
+
+        this.logger.info(
+          `upserted ${upserted} yield actions for suggestion #${suggestion.id} into DB`,
+        );
+
+        totalUpserted += upserted;
+      }
+
+      this.logger.info(`upserted ${totalUpserted} yield actions into DB`);
     } catch (error) {
       this.logger.error(`run: ${error}`);
     }
@@ -71,5 +105,7 @@ export class DataCollector {
     for (const chain of chains) {
       await this.updateDefillamaEnrichedPools(chain, 100_000, 10);
     }
+
+    await this.updateYieldActions();
   }
 }

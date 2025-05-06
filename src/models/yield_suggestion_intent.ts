@@ -4,11 +4,11 @@ import { YieldSuggestion } from "./yield_suggestions";
 export interface YieldSuggestionIntent {
   id?: number;
   walletAddress: string;
-  suggestion: YieldSuggestion;
-  currentSequenceNumber: number;
+  suggestionId: number;
+  suggestion?: YieldSuggestion;
   assetAmount: number;
   status: YieldSuggestionIntentStatus;
-  tx_history: YieldSuggestionIntentTxHistory[];
+  txHistory?: YieldSuggestionIntentTxHistory[];
 }
 
 export enum YieldSuggestionIntentStatus {

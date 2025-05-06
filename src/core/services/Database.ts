@@ -18,6 +18,8 @@ import {
   TransactionStatus,
   YieldSuggestionIntentTxHistory,
 } from "../../models/yield_suggestion_intent_tx_history";
+import { YieldAction } from "../../models/yield_actions";
+import { LEGAL_TCP_SOCKET_OPTIONS } from "mongodb";
 
 export class DatabaseService {
   private pool: Pool;
@@ -99,13 +101,13 @@ export class DatabaseService {
   ): Promise<PoolYield[]> {
     let maxSigma: number;
     switch (riskTolerance) {
-      case RiskTolerance.Low:
+      case RiskTolerance.LOW:
         maxSigma = 0.15;
         break;
-      case RiskTolerance.Medium:
+      case RiskTolerance.MEDIUM:
         maxSigma = 0.5;
         break;
-      case RiskTolerance.High:
+      case RiskTolerance.HIGH:
         maxSigma = 5;
         break;
       default:
@@ -381,6 +383,25 @@ export class DatabaseService {
     }
   }
 
+  async getYieldSuggestionsLatest(lookback = 30 * 24 * 60 * 60 * 1000): Promise<YieldSuggestion[]> {
+    const lookbackDate = new Date(Date.now() - lookback);
+
+    const result = await this.pool.query(
+      `SELECT * FROM (
+      SELECT *, 
+           ROW_NUMBER() OVER (PARTITION BY symbol, risk_tolerance, investment_timeframe 
+                   ORDER BY timestamp DESC) as row_num
+      FROM yield_suggestions 
+      WHERE timestamp >= $1
+      ) ranked
+      WHERE row_num = 1
+      ORDER BY symbol, risk_tolerance, investment_timeframe DESC`,
+      [lookbackDate],
+    );
+
+    return result.rows.map(dataToYieldSuggestion);
+  }
+
   async getYieldSuggestions(): Promise<YieldSuggestion[]> {
     const result = await this.pool.query(`SELECT * FROM yield_suggestions`);
 
@@ -397,6 +418,22 @@ export class DatabaseService {
     return dataToYieldSuggestion(result.rows[0]);
   }
 
+  async getYieldSuggestionIntentsByWalletAddress(
+    walletAddress: string,
+    limit = 10,
+  ): Promise<YieldSuggestionIntent[] | null> {
+    const result = await this.pool.query(
+      `SELECT * FROM yield_suggestion_intents WHERE wallet_address = $1 LIMIT $2`,
+      [walletAddress, limit],
+    );
+
+    if (result.rowCount === 0) {
+      return null;
+    }
+
+    return result.rows.map(dataToYieldSuggestionIntent);
+  }
+
   async createYieldSuggestionIntent(
     suggestion: YieldSuggestion,
     walletAddress: string,
@@ -404,27 +441,24 @@ export class DatabaseService {
   ): Promise<YieldSuggestionIntent> {
     const result = await this.pool.query(
       `
-        INSERT INTO yield_suggestion_intents (wallet_address, yield_suggestion_id, asset_amount, status) VALUES
-        ($1, $2, $3, $4, $5)
+        INSERT INTO yield_suggestion_intents (wallet_address, yield_suggestion_id, asset_amount) VALUES
+        ($1, $2, $3)
         RETURNING id, wallet_address, yield_suggestion_id, asset_amount, status
       `,
-      [walletAddress, suggestion.id, amount, YieldSuggestionIntentStatus.NEW],
+      [walletAddress, suggestion.id, amount],
     );
 
     if (result.rowCount === 0) {
-      throw new Error("Failed to create yield action intent");
+      throw new Error("create yield action intent");
     }
 
     return dataToYieldSuggestionIntent(result.rows[0]);
   }
 
   async getYieldSuggestionIntent(id: number): Promise<YieldSuggestionIntent | null> {
-    const result = await this.pool.query(
-      `
-        SELECT * FROM yield_suggestion_intents WHERE id = $1
-      `,
-      [id],
-    );
+    const result = await this.pool.query(`SELECT * FROM yield_suggestion_intents WHERE id = $1`, [
+      id,
+    ]);
 
     if (result.rowCount === 0) {
       return null;
@@ -433,8 +467,63 @@ export class DatabaseService {
     return dataToYieldSuggestionIntent(result.rows[0]);
   }
 
+  async insertYieldSuggestion(suggestion: YieldSuggestion): Promise<YieldSuggestion> {
+    const result = await this.pool.query(
+      `
+        INSERT INTO yield_suggestions (timestamp, insight, is_actionable, symbol, investment_timeframe, risk_tolerance) VALUES
+        ($1, $2, $3, $4, $5, $6)
+        RETURNING id, timestamp, insight, is_actionable, symbol, investment_timeframe, risk_tolerance
+      `,
+      [
+        suggestion.timestamp,
+        suggestion.insight,
+        suggestion.isActionable,
+        suggestion.symbol,
+        suggestion.investmentTimeframe,
+        suggestion.riskTolerance,
+      ],
+    );
+
+    if (result.rowCount === 0) {
+      throw new Error("Failed to create yield action");
+    }
+
+    return dataToYieldSuggestion(result.rows[0]);
+  }
+
+  async getYieldSuggestionIntentTxHistoryByWalletAddress(
+    walletAddress: string,
+  ): Promise<YieldSuggestionIntentTxHistory[]> {
+    const result = await this.pool.query(
+      `SELECT * FROM yield_suggestion_intent_tx_history WHERE wallet_address = $1`,
+      [walletAddress],
+    );
+
+    if (result.rowCount === 0) {
+      return [];
+    }
+
+    return result.rows.map(dataToYieldSuggestionIntentTxHistory);
+  }
+
+  async getYieldSuggestionIntentCurrentSequenceNumber(
+    intent: YieldSuggestionIntent,
+  ): Promise<number> {
+    const result = await this.pool.query(
+      `SELECT MAX(sequence_number) as sequence_number FROM yield_suggestion_intent_tx_history WHERE wallet_address = $1 AND yield_suggestion_intent_id = $2`,
+      [intent.walletAddress, intent.id],
+    );
+
+    if (result.rowCount === 0) {
+      return 0;
+    }
+
+    return result.rows[0].sequence_number + 1;
+  }
+
   async insertYieldSuggestionIntentTxHistory(
     yieldSuggestionIntent: YieldSuggestionIntent,
+    sequenceNumber: number,
     hash: string,
     status: TransactionStatus,
   ): Promise<YieldSuggestionIntentTxHistory> {
@@ -445,9 +534,9 @@ export class DatabaseService {
       `,
       [
         yieldSuggestionIntent.walletAddress,
-        yieldSuggestionIntent.suggestion.id,
+        yieldSuggestionIntent.suggestionId,
         yieldSuggestionIntent.id,
-        yieldSuggestionIntent.currentSequenceNumber,
+        sequenceNumber,
         hash,
         status,
       ],
@@ -459,11 +548,42 @@ export class DatabaseService {
 
     return dataToYieldSuggestionIntentTxHistory(result.rows[0]);
   }
+
+  async insertYieldActions(actions: YieldAction[] | null): Promise<number> {
+    if (actions === null) {
+      return 0;
+    }
+
+    if (actions.length === 0) {
+      return 0;
+    }
+
+    const result = await this.pool.query(
+      `
+        INSERT INTO yield_actions (name, yield_suggestion_id, sequence_number, wallet_address, title, description, action_type) VALUES
+        ${actions.map((_, i) => `($${i * 7 + 1}, $${i * 7 + 2}, $${i * 7 + 3}, $${i * 7 + 4}, $${i * 7 + 5}, $${i * 7 + 6}, $${i * 7 + 7})`).join(", ")}
+      `,
+      actions
+        .map((a) => [
+          a.name,
+          a.suggestionId,
+          a.sequenceNumber,
+          a.walletAddress,
+          a.title,
+          a.description,
+          a.actionType,
+        ])
+        .flat(),
+    );
+
+    return result.rowCount || 0;
+  }
 }
 
 const dataToYieldSuggestion = (data: any): YieldSuggestion => {
   return {
     id: data.id,
+    timestamp: data.timestamp,
     insight: data.insight,
     isActionable: data.is_actionable,
     symbol: data.symbol,
@@ -478,11 +598,11 @@ const dataToYieldSuggestionIntent = (data: any): YieldSuggestionIntent => {
   return {
     id: data.id,
     walletAddress: data.wallet_address,
+    suggestionId: data.yield_suggestion_id,
     suggestion: data.suggestion,
-    currentSequenceNumber: data.current_sequence_number,
     assetAmount: data.asset_amount,
     status: data.status,
-    tx_history: data.tx_history || [],
+    txHistory: data.tx_history,
   };
 };
 

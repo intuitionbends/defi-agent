@@ -33,7 +33,7 @@ export function createApiV1Router(dbService: DatabaseService): Router {
   router.get("/pool_yields/suggest", async (req: Request, res: Response, next: NextFunction) => {
     try {
       const {
-        riskTolerance = "Low",
+        riskTolerance = RiskTolerance.LOW,
         maxDrawdown = "0.2",
         asset = "APT",
         assetValueUsd = "1000",
@@ -58,14 +58,17 @@ export function createApiV1Router(dbService: DatabaseService): Router {
     }
   });
 
-  router.get("/yield_suggestions", async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const suggestions = await dbService.getYieldSuggestions();
-      res.json(suggestions);
-    } catch (error) {
-      next(error);
-    }
-  });
+  router.get(
+    "/yield_suggestions/latest",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const suggestions = await dbService.getYieldSuggestionsLatest();
+        res.json(suggestions);
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
 
   router.get("/yield_suggestions/:id", async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -84,8 +87,41 @@ export function createApiV1Router(dbService: DatabaseService): Router {
     }
   });
 
+  // todo: add auth
+  router.get(
+    "/yield_suggestion_intents",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const { walletAddress } = req.body;
+
+        const suggestions = await dbService.getYieldSuggestionIntentsByWalletAddress(walletAddress);
+
+        res.json(suggestions);
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+
+  // TODO: add auth
+  router.get(
+    "/yield_suggestion_intents/:id",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const { id } = req.params;
+        const { walletAddress } = req.body;
+
+        const suggestions = await dbService.getYieldSuggestionIntent(Number(id));
+
+        res.json(suggestions);
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+
   router.post(
-    "/yield_suggestions/:id/intent/create",
+    "/yield_suggestions/:id/createIntent",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const { id } = req.params;
@@ -122,10 +158,10 @@ export function createApiV1Router(dbService: DatabaseService): Router {
   );
 
   // TODO: add auth
+  // TODO: tx builder to be published as npm package and consumed here
   router.get(
-    "/yield_suggestion_intent/:id/latestTxData",
+    "/yield_suggestion_intents/:id/latestTxData",
     async (req: Request, res: Response, next: NextFunction) => {
-      // TODO: tx builder to be published as npm package and consumed here
       try {
         const intent = await dbService.getYieldSuggestionIntent(Number(req.params.id));
 
@@ -143,12 +179,12 @@ export function createApiV1Router(dbService: DatabaseService): Router {
     },
   );
 
+  // TODO: test
   router.post(
     "/yield_suggestion_intent/:id/submitSignedTransaction",
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const { id } = req.params;
-        // TODO: review
         const { transaction, signedTransaction } = req.body;
 
         const intent = await dbService.getYieldSuggestionIntent(Number(id));
@@ -184,13 +220,33 @@ export function createApiV1Router(dbService: DatabaseService): Router {
           transactionHash: response.hash,
         });
 
+        const currentSequenceNumber =
+          await dbService.getYieldSuggestionIntentCurrentSequenceNumber(intent);
+
         const txHistory = await dbService.insertYieldSuggestionIntentTxHistory(
           intent,
+          currentSequenceNumber,
           response.hash,
           TransactionStatus.FINALIZED,
         );
 
         res.json(txHistory);
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+
+  router.get(
+    "/yield_suggestion_intent_tx_history",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const { walletAddress } = req.body;
+
+        const history =
+          await dbService.getYieldSuggestionIntentTxHistoryByWalletAddress(walletAddress);
+
+        res.json(history);
       } catch (error) {
         next(error);
       }

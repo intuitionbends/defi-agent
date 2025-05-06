@@ -11,7 +11,7 @@ export interface AvailableInteraction {
 
 export interface InsightAgentInput {
   preferences: {
-    riskTolerance: string;
+    riskTolerance: RiskTolerance;
     maxDrawdown: number;
     capitalSize: number;
     investmentTimeframe: number;
@@ -41,10 +41,16 @@ export interface UserPreferences {
   assetSymbol: string;
 }
 
+export enum InvestmentTimeframe {
+  _30_DAYS = 30,
+  _90_DAYS = 90,
+  _180_DAYS = 180,
+}
+
 export enum RiskTolerance {
-  Low = "Low",
-  Medium = "Medium",
-  High = "High",
+  LOW = 0,
+  MEDIUM = 1,
+  HIGH = 2,
 }
 
 export interface PoolYield {
