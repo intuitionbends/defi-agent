@@ -1,5 +1,4 @@
 import winston from "winston";
-import { DatabaseService } from "./Database";
 import { YieldAction, YieldActionType } from "../../models/yield_actions";
 import { YieldSuggestion } from "../../models/yield_suggestions";
 import { Chain, DataSource } from "../../types/enums";
@@ -24,18 +23,31 @@ const defillamaPoolYieldToYieldActions = (
   switch (chain) {
     case Chain.Aptos:
       if (symbol === "APT") {
-        if (project === "thalaswap") {
-          return [
-            {
-              title: "stake",
-              description: "stake APT",
-              suggestionId: 1,
-              sequenceNumber: 1,
-              actionType: YieldActionType.Stake,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            },
-          ];
+        switch (project) {
+          case "echelon":
+            return [
+              {
+                title: "lend",
+                description: "lend APT",
+                suggestionId: 1,
+                sequenceNumber: 1,
+                actionType: YieldActionType.Stake,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              },
+            ];
+          case "amnis":
+            return [
+              {
+                title: "lend",
+                description: "lend APT",
+                suggestionId: 1,
+                sequenceNumber: 1,
+                actionType: YieldActionType.Stake,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              },
+            ];
         }
       }
 

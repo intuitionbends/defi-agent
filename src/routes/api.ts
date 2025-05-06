@@ -87,6 +87,26 @@ export function createApiV1Router(dbService: DatabaseService): Router {
     }
   });
 
+  router.get(
+    "/yield_suggestions/:id/yield_actions",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const { id } = req.params;
+
+        const actions = await dbService.getYieldActionsBySuggestionId(Number(id));
+
+        if (!actions) {
+          res.status(404).json({ error: "Yield action not found" });
+          return;
+        }
+
+        res.json(actions);
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+
   // todo: add auth
   router.get(
     "/yield_suggestion_intents",
