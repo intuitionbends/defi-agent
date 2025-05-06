@@ -1,9 +1,5 @@
 import { Pool } from "pg";
-
-import dotenv from "dotenv";
-dotenv.config();
-
-import { createLogger, scheduleAligned } from "@intuition-bends/common-js";
+import { createLogger } from "@intuition-bends/common-js";
 import { DataCollector } from "./core/services/DataCollector";
 import { loadConfig } from "./config";
 import { DatabaseService } from "./core/services/Database";
@@ -11,7 +7,11 @@ import { DefiLlama } from "./data-sources/defillama";
 import express from "express";
 import { createApiV1Router } from "./routes/api";
 import defaultRouter from "./routes/default";
-import { TransactionBuilder } from "./core/services/TransactionBuilder";
+import { YieldActionBuilder } from "./core/services/YieldActionBuilder";
+import { TransactionBuilderAdapter } from "./core/services/TransactionBuilderAdapter";
+
+import dotenv from "dotenv";
+dotenv.config();
 
 const main = async () => {
   const logger = createLogger("defi-agent");
@@ -35,11 +35,12 @@ const main = async () => {
   }
 
   const dbService = new DatabaseService(pool, logger);
-  const txBuilder = new TransactionBuilder(dbService, logger);
+  const yieldActionBuilder = new YieldActionBuilder(logger);
+  const txBuilder = new TransactionBuilderAdapter(logger);
 
   logger.info("start data collector");
 
-  const collector = new DataCollector(dbService, logger, defillama, txBuilder);
+  const collector = new DataCollector(dbService, logger, defillama, yieldActionBuilder);
   // await collector.run(config.chains, config.collectionInterval);
   await collector.runOnce(config.chains);
 
@@ -47,7 +48,7 @@ const main = async () => {
   app.use(express.json());
 
   app.use("", defaultRouter);
-  app.use("/api/v1", createApiV1Router(dbService));
+  app.use("/api/v1", createApiV1Router(dbService, txBuilder));
 
   const server = app.listen(config.port, () => {
     logger.info(`listening on port ${config.port}`);

@@ -4,7 +4,7 @@ import { DatabaseService } from "../core/services/Database";
 import { createLogger } from "@intuition-bends/common-js";
 import { YieldSuggestion } from "../models/yield_suggestions";
 import { InvestmentTimeframe, RiskTolerance } from "../types/types";
-import { TransactionBuilder } from "../core/services/TransactionBuilder";
+import { YieldActionBuilder } from "../core/services/YieldActionBuilder";
 
 import dotenv from "dotenv";
 import { loadConfig } from "../config";
@@ -33,7 +33,7 @@ const runSeeder = async () => {
   }
 
   const dbService = new DatabaseService(pool, logger);
-  const txBuilder = new TransactionBuilder(dbService, logger);
+  const txBuilder = new YieldActionBuilder(dbService, logger);
 
   logger.info(`connect to postgres`);
 

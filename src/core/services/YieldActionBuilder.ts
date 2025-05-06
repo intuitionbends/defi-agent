@@ -2,7 +2,20 @@ import winston from "winston";
 import { YieldAction, YieldActionType } from "../../models/yield_actions";
 import { YieldSuggestion } from "../../models/yield_suggestions";
 import { Chain, DataSource } from "../../types/enums";
-import { YieldSuggestionIntent } from "../../models/yield_suggestion_intent";
+
+export class YieldActionBuilder {
+  private logger: winston.Logger;
+
+  constructor(logger: winston.Logger) {
+    this.logger = logger;
+  }
+
+  async buildYieldActionsBySuggestion(suggestion: YieldSuggestion): Promise<YieldAction[] | null> {
+    const actions = yieldSuggestionToYieldActions(suggestion);
+
+    return actions;
+  }
+}
 
 const yieldSuggestionToYieldActions = (suggestion: YieldSuggestion): YieldAction[] => {
   if (suggestion.dataSource === DataSource.Defillama) {
@@ -57,29 +70,3 @@ const defillamaPoolYieldToYieldActions = (
       return [];
   }
 };
-
-export class TransactionBuilder {
-  private logger: winston.Logger;
-
-  constructor(logger: winston.Logger) {
-    this.logger = logger;
-  }
-
-  async buildYieldActionsBySuggestion(suggestion: YieldSuggestion): Promise<YieldAction[] | null> {
-    const actions = yieldSuggestionToYieldActions(suggestion);
-
-    return actions;
-  }
-
-  async buildTxData(yieldIntent: YieldSuggestionIntent, walletAddress: string): Promise<string> {
-    // TODO: replace with actual tx builder
-    const transactionData = await txBuilder.buildStakeTransaction({
-      tokens: [yieldIntent.suggestion!.symbol],
-      amounts: [yieldIntent.assetAmount],
-      protocol: yieldIntent.suggestion!.project,
-      userAddress: walletAddress,
-    });
-
-    return transactionData;
-  }
-}

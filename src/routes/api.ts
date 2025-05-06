@@ -10,12 +10,16 @@ import {
   Deserializer,
   AccountAuthenticator,
 } from "@aptos-labs/ts-sdk";
+import { TransactionStatus } from "../models/yield_suggestion_intent_tx_history";
 
 import dotenv from "dotenv";
-import { TransactionStatus } from "../models/yield_suggestion_intent_tx_history";
+import { TransactionBuilderAdapter } from "../core/services/TransactionBuilderAdapter";
 dotenv.config();
 
-export function createApiV1Router(dbService: DatabaseService): Router {
+export function createApiV1Router(
+  dbService: DatabaseService,
+  txBuilder: TransactionBuilderAdapter,
+): Router {
   const router = express.Router();
   const key = process.env.OPENROUTER_API_KEY as string;
 
@@ -123,7 +127,6 @@ export function createApiV1Router(dbService: DatabaseService): Router {
     },
   );
 
-  // TODO: add auth
   router.get(
     "/yield_suggestion_intents/:id",
     async (req: Request, res: Response, next: NextFunction) => {
@@ -177,8 +180,6 @@ export function createApiV1Router(dbService: DatabaseService): Router {
     },
   );
 
-  // TODO: add auth
-  // TODO: tx builder to be published as npm package and consumed here
   router.get(
     "/yield_suggestion_intents/:id/latestTxData",
     async (req: Request, res: Response, next: NextFunction) => {
@@ -190,7 +191,7 @@ export function createApiV1Router(dbService: DatabaseService): Router {
           return;
         }
 
-        const txData = "";
+        const txData = txBuilder.buildTxData(intent);
 
         res.json(txData);
       } catch (error) {

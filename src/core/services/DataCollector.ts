@@ -3,24 +3,24 @@ import winston from "winston";
 import { DatabaseService } from "./Database";
 import { DefiLlama } from "../../data-sources/defillama";
 import { Chain } from "../../types/enums";
-import { TransactionBuilder } from "./TransactionBuilder";
+import { YieldActionBuilder } from "./YieldActionBuilder";
 
 export class DataCollector {
   private dbService: DatabaseService;
   private logger: winston.Logger;
   private defillama: DefiLlama;
-  private txBuilder: TransactionBuilder;
+  private yieldActionBuilder: YieldActionBuilder;
 
   constructor(
     databaseService: DatabaseService,
     logger: winston.Logger,
     defillama: DefiLlama,
-    txBuilder: TransactionBuilder,
+    yieldActionBuilder: YieldActionBuilder,
   ) {
     this.dbService = databaseService;
     this.logger = logger;
     this.defillama = defillama;
-    this.txBuilder = txBuilder;
+    this.yieldActionBuilder = yieldActionBuilder;
   }
 
   async updatePoolYields(chains: Chain[]): Promise<void> {
@@ -59,7 +59,8 @@ export class DataCollector {
       const suggestions = await this.dbService.getYieldSuggestionsLatest();
 
       for (const suggestion of suggestions) {
-        const yieldActions = await this.txBuilder.buildYieldActionsBySuggestion(suggestion);
+        const yieldActions =
+          await this.yieldActionBuilder.buildYieldActionsBySuggestion(suggestion);
 
         if (!yieldActions) continue;
 
