@@ -10,16 +10,12 @@ import {
 import { Chain, DataSource } from "../../types/enums";
 import { DefillamaEnrichedPool } from "../../data-sources/defillama";
 import { YieldSuggestion } from "../../models/yield_suggestions";
-import {
-  YieldSuggestionIntent,
-  YieldSuggestionIntentStatus,
-} from "../../models/yield_suggestion_intent";
+import { YieldSuggestionIntent } from "../../models/yield_suggestion_intent";
 import {
   TransactionStatus,
   YieldSuggestionIntentTxHistory,
 } from "../../models/yield_suggestion_intent_tx_history";
 import { YieldAction } from "../../models/yield_actions";
-import { LEGAL_TCP_SOCKET_OPTIONS } from "mongodb";
 
 export class DatabaseService {
   private pool: Pool;
@@ -408,6 +404,15 @@ export class DatabaseService {
     return result.rows.map(dataToYieldSuggestion);
   }
 
+  async getYieldActionsBySuggestionId(suggestionId: number): Promise<YieldAction[]> {
+    const result = await this.pool.query(
+      `SELECT * FROM yield_actions WHERE yield_suggestion_id = $1`,
+      [suggestionId],
+    );
+
+    return result.rows.map(dataToYieldAction);
+  }
+
   async getYieldSuggestion(id: number): Promise<YieldSuggestion | null> {
     const result = await this.pool.query(`SELECT * FROM yield_suggestions WHERE id = $1`, [id]);
 
@@ -560,19 +565,11 @@ export class DatabaseService {
 
     const result = await this.pool.query(
       `
-        INSERT INTO yield_actions (name, yield_suggestion_id, sequence_number, wallet_address, title, description, action_type) VALUES
-        ${actions.map((_, i) => `($${i * 7 + 1}, $${i * 7 + 2}, $${i * 7 + 3}, $${i * 7 + 4}, $${i * 7 + 5}, $${i * 7 + 6}, $${i * 7 + 7})`).join(", ")}
+      INSERT INTO yield_actions (yield_suggestion_id, sequence_number, title, description, action_type) VALUES
+      ${actions.map((_, i) => `($${i * 5 + 1}, $${i * 5 + 2}, $${i * 5 + 3}, $${i * 5 + 4}, $${i * 5 + 5})`).join(", ")}
       `,
       actions
-        .map((a) => [
-          a.name,
-          a.suggestionId,
-          a.sequenceNumber,
-          a.walletAddress,
-          a.title,
-          a.description,
-          a.actionType,
-        ])
+        .map((a) => [a.suggestionId, a.sequenceNumber, a.title, a.description, a.actionType])
         .flat(),
     );
 
@@ -584,11 +581,26 @@ const dataToYieldSuggestion = (data: any): YieldSuggestion => {
   return {
     id: data.id,
     timestamp: data.timestamp,
-    insight: data.insight,
-    isActionable: data.is_actionable,
     symbol: data.symbol,
     investmentTimeframe: data.investment_timeframe,
     riskTolerance: data.risk_tolerance,
+    dataSource: data.data_source,
+    chain: data.chain,
+    project: data.project,
+    insight: data.insight,
+    isActionable: data.is_actionable,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+  };
+};
+
+const dataToYieldAction = (data: any): YieldAction => {
+  return {
+    suggestionId: data.yield_suggestion_id,
+    sequenceNumber: data.sequence_number,
+    title: data.title,
+    description: data.description,
+    actionType: data.action_type,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
   };

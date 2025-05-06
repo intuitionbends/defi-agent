@@ -4,10 +4,11 @@ import { DatabaseService } from "../core/services/Database";
 import { createLogger } from "@intuition-bends/common-js";
 import { YieldSuggestion } from "../models/yield_suggestions";
 import { InvestmentTimeframe, RiskTolerance } from "../types/types";
-import { TransactionBuilder } from "../core/services/TransactionBuilder";
+import { YieldActionBuilder } from "../core/services/YieldActionBuilder";
+import { loadConfig } from "../config";
+import { Chain, DataSource } from "../types/enums";
 
 import dotenv from "dotenv";
-import { loadConfig } from "../config";
 dotenv.config();
 
 const runSeeder = async () => {
@@ -33,7 +34,7 @@ const runSeeder = async () => {
   }
 
   const dbService = new DatabaseService(pool, logger);
-  const txBuilder = new TransactionBuilder(dbService, logger);
+  const yaBuilder = new YieldActionBuilder(logger);
 
   logger.info(`connect to postgres`);
 
@@ -45,7 +46,7 @@ const runSeeder = async () => {
 
     await dbService.insertYieldSuggestion(suggestion);
 
-    const actions = await txBuilder.buildYieldActionsBySuggestion(suggestion);
+    const actions = await yaBuilder.buildYieldActionsBySuggestion(suggestion);
 
     await dbService.insertYieldActions(actions);
   }
@@ -60,6 +61,9 @@ const getRandomYieldSuggestion = (id: number): YieldSuggestion => {
     insight: faker.lorem.sentence(),
     symbol: faker.string.alpha({ length: 3 }).toUpperCase(),
     isActionable: faker.datatype.boolean(),
+    chain: Chain.Aptos,
+    project: "amnis",
+    dataSource: DataSource.Defillama,
     investmentTimeframe: faker.helpers.arrayElement([
       InvestmentTimeframe._30_DAYS,
       InvestmentTimeframe._90_DAYS,
