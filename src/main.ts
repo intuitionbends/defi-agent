@@ -44,6 +44,7 @@ const main = async () => {
 
 
   const app = express();
+  app.use(express.json());
 
   app.use("", defaultRouter);
   app.use("/api/v1", createApiV1Router(dbService));

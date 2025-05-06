@@ -8,7 +8,16 @@ import {
   RiskTolerance,
 } from "../../types/types";
 import { Chain, DataSource } from "../../types/enums";
-import { DefillamaEnrichedPool, DefiLlama } from "../../data-sources/defillama";
+import { DefillamaEnrichedPool } from "../../data-sources/defillama";
+import { YieldSuggestion } from "../../models/yield_suggestions";
+import {
+  YieldSuggestionIntent,
+  YieldSuggestionIntentStatus,
+} from "../../models/yield_suggestion_intent";
+import {
+  TransactionStatus,
+  YieldSuggestionIntentTxHistory,
+} from "../../models/yield_suggestion_intent_tx_history";
 
 export class DatabaseService {
   private pool: Pool;
@@ -371,4 +380,118 @@ export class DatabaseService {
       return 0;
     }
   }
+
+  async getYieldSuggestions(): Promise<YieldSuggestion[]> {
+    const result = await this.pool.query(`SELECT * FROM yield_suggestions`);
+
+    return result.rows.map(dataToYieldSuggestion);
+  }
+
+  async getYieldSuggestion(id: number): Promise<YieldSuggestion | null> {
+    const result = await this.pool.query(`SELECT * FROM yield_suggestions WHERE id = $1`, [id]);
+
+    if (result.rowCount === 0) {
+      return null;
+    }
+
+    return dataToYieldSuggestion(result.rows[0]);
+  }
+
+  async createYieldSuggestionIntent(
+    suggestion: YieldSuggestion,
+    walletAddress: string,
+    amount: number,
+  ): Promise<YieldSuggestionIntent> {
+    const result = await this.pool.query(
+      `
+        INSERT INTO yield_suggestion_intents (wallet_address, yield_suggestion_id, asset_amount, status) VALUES
+        ($1, $2, $3, $4, $5)
+        RETURNING id, wallet_address, yield_suggestion_id, asset_amount, status
+      `,
+      [walletAddress, suggestion.id, amount, YieldSuggestionIntentStatus.NEW],
+    );
+
+    if (result.rowCount === 0) {
+      throw new Error("Failed to create yield action intent");
+    }
+
+    return dataToYieldSuggestionIntent(result.rows[0]);
+  }
+
+  async getYieldSuggestionIntent(id: number): Promise<YieldSuggestionIntent | null> {
+    const result = await this.pool.query(
+      `
+        SELECT * FROM yield_suggestion_intents WHERE id = $1
+      `,
+      [id],
+    );
+
+    if (result.rowCount === 0) {
+      return null;
+    }
+
+    return dataToYieldSuggestionIntent(result.rows[0]);
+  }
+
+  async insertYieldSuggestionIntentTxHistory(
+    yieldSuggestionIntent: YieldSuggestionIntent,
+    hash: string,
+    status: TransactionStatus,
+  ): Promise<YieldSuggestionIntentTxHistory> {
+    const result = await this.pool.query(
+      `
+        INSERT INTO yield_suggestion_intent_tx_history (wallet_address, yield_suggestion_id, yield_suggestion_intent_id, sequence_number, tx_hash, tx_status) VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id, wallet_address, yield_suggestion_id, yield_suggestion_intent_id, sequence_number, tx_hash, tx_status
+      `,
+      [
+        yieldSuggestionIntent.walletAddress,
+        yieldSuggestionIntent.suggestion.id,
+        yieldSuggestionIntent.id,
+        yieldSuggestionIntent.currentSequenceNumber,
+        hash,
+        status,
+      ],
+    );
+
+    if (result.rowCount === 0) {
+      throw new Error("Failed to create yield action intent tx history");
+    }
+
+    return dataToYieldSuggestionIntentTxHistory(result.rows[0]);
+  }
 }
+
+const dataToYieldSuggestion = (data: any): YieldSuggestion => {
+  return {
+    id: data.id,
+    insight: data.insight,
+    isActionable: data.is_actionable,
+    symbol: data.symbol,
+    investmentTimeframe: data.investment_timeframe,
+    riskTolerance: data.risk_tolerance,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
+  };
+};
+
+const dataToYieldSuggestionIntent = (data: any): YieldSuggestionIntent => {
+  return {
+    id: data.id,
+    walletAddress: data.wallet_address,
+    suggestion: data.suggestion,
+    currentSequenceNumber: data.current_sequence_number,
+    assetAmount: data.asset_amount,
+    status: data.status,
+    tx_history: data.tx_history || [],
+  };
+};
+
+const dataToYieldSuggestionIntentTxHistory = (data: any): YieldSuggestionIntentTxHistory => {
+  return {
+    walletAddress: data.wallet_address,
+    suggestion: data.suggestion,
+    sequence_number: data.sequence_number,
+    txHash: data.tx_hash,
+    txStatus: data.tx_status,
+  };
+};
