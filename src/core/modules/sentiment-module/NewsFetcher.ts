@@ -75,7 +75,8 @@ export class NewsFetcher {
 
   filterForAptosNews(items: NewsItem[]): NewsItem[] {
     const aptosKeywords = [
-      "aptos",
+      "avalanche",
+      "Aptos",
       "aptos chain",
       "aptos labs",
       "aptoslabs",
