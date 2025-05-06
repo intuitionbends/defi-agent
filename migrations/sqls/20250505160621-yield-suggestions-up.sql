@@ -1,5 +1,6 @@
 CREATE TABLE yield_suggestions (
   id SERIAL PRIMARY KEY,
+  timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
   insight TEXT NOT NULL,
   is_actionable BOOLEAN NOT NULL,
   symbol VARCHAR NOT NULL,
@@ -10,4 +11,4 @@ CREATE TABLE yield_suggestions (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_yield_suggestions_symbol ON yield_suggestions(symbol);
+CREATE INDEX idx_yield_suggestions_timestamp ON yield_suggestions(timestamp);

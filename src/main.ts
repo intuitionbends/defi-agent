@@ -1,10 +1,9 @@
 import { Pool } from "pg";
-import bodyParser from "body-parser";
 
 import dotenv from "dotenv";
 dotenv.config();
 
-import { createLogger } from "@intuition-bends/common-js";
+import { createLogger, scheduleAligned } from "@intuition-bends/common-js";
 import { DataCollector } from "./core/services/DataCollector";
 import { loadConfig } from "./config";
 import { DatabaseService } from "./core/services/Database";
@@ -12,6 +11,7 @@ import { DefiLlama } from "./data-sources/defillama";
 import express from "express";
 import { createApiV1Router } from "./routes/api";
 import defaultRouter from "./routes/default";
+import { TransactionBuilder } from "./core/services/TransactionBuilder";
 
 const main = async () => {
   const logger = createLogger("defi-agent");
@@ -35,13 +35,13 @@ const main = async () => {
   }
 
   const dbService = new DatabaseService(pool, logger);
+  const txBuilder = new TransactionBuilder(dbService, logger);
 
   logger.info("start data collector");
 
-  const collector = new DataCollector(dbService, logger, defillama);
+  const collector = new DataCollector(dbService, logger, defillama, txBuilder);
   // await collector.run(config.chains, config.collectionInterval);
   await collector.runOnce(config.chains);
-
 
   const app = express();
   app.use(express.json());

@@ -13,7 +13,10 @@
     "migrate:up": "npx db-migrate up",
     "migrate:create": "npx db-migrate create $npm_config_name --sql-file",
     "migrate:down": "npx db-migrate down -c $npm_config_count",
+    "migrate:seed": "ts-node src/scripts/seed.ts",
     "migrate:clean": "npx db-migrate down -c 1000",
+    "migrate:reset": "npm run migrate:clean && npm run migrate:up",
+    "migrate:reset:seed": "npm run migrate:clean && npm run migrate:up && npm run migrate:seed",
     "docker:build": "docker build -t defi-agent:$(npm run version -s) -f Dockerfile .",
     "docker:push": "docker tag defi-agent:$(npm run version -s) 674734398360.dkr.ecr.ap-southeast-1.amazonaws.com/delaunch/defi-agent:$(npm run version -s) && docker push 674734398360.dkr.ecr.ap-southeast-1.amazonaws.com/delaunch/defi-agent:$(npm run version -s)",
     "docker:build_push": "npm run docker:build && npm run docker:push"
@@ -23,6 +26,7 @@
   "description": "",
   "dependencies": {
     "@aptos-labs/ts-sdk": "^1.39.0",
+    "@faker-js/faker": "^9.7.0",
     "@intuition-bends/common-js": "^1.2.0",
     "@jest/globals": "^29.7.0",
     "@langchain/anthropic": "^0.3.15",

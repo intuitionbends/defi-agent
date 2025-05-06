@@ -10,4 +10,4 @@ CREATE TABLE yield_suggestion_intent_tx_history (
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_yield_suggestion_intent_tx_history_intent_id ON yield_suggestion_intent_tx_history(yield_suggestion_intent_id);
+CREATE INDEX idx_yield_suggestion_intent_tx_history_wallet_address ON yield_suggestion_intent_tx_history(wallet_address);
