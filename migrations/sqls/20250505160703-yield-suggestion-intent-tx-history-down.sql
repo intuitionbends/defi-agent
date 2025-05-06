@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS yield_suggestion_intent_tx_history;

@@ -3,7 +3,16 @@ import { DatabaseService } from "../core/services/Database";
 import { Chain } from "../types/enums";
 import { RiskTolerance, UserPreferences } from "../types/types";
 import { OrchestratorController } from "../core/orchestrator/OrchestratorController";
+import {
+  AptosConfig,
+  Aptos,
+  SimpleTransaction,
+  Deserializer,
+  AccountAuthenticator,
+} from "@aptos-labs/ts-sdk";
+
 import dotenv from "dotenv";
+import { TransactionStatus } from "../models/yield_suggestion_intent_tx_history";
 dotenv.config();
 
 export function createApiV1Router(dbService: DatabaseService): Router {
@@ -28,11 +37,11 @@ export function createApiV1Router(dbService: DatabaseService): Router {
         maxDrawdown = "0.2",
         asset = "APT",
         assetValueUsd = "1000",
-        investmentTimeframe = "6"
+        investmentTimeframe = "6",
       } = req.query;
-  
+
       const orchestrator = new OrchestratorController(dbService, key);
-  
+
       const preferences: UserPreferences = {
         chain: Chain.Aptos,
         riskTolerance: riskTolerance as RiskTolerance,
@@ -41,13 +50,152 @@ export function createApiV1Router(dbService: DatabaseService): Router {
         investmentTimeframe: Number(investmentTimeframe),
         assetSymbol: "APT",
       };
-  
+
       const yields = await orchestrator.run(preferences);
       res.json(yields);
     } catch (error) {
       next(error);
     }
   });
+
+  router.get("/yield_suggestions", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const suggestions = await dbService.getYieldSuggestions();
+      res.json(suggestions);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get("/yield_suggestions/:id", async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+
+      const suggestion = await dbService.getYieldSuggestion(Number(id));
+
+      if (!suggestion) {
+        res.status(404).json({ error: "Yield suggestion not found" });
+        return;
+      }
+
+      res.json(suggestion);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post(
+    "/yield_suggestions/:id/intent/create",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const { id } = req.params;
+        const { amount, walletAddress } = req.body;
+
+        if (!amount) {
+          res.status(400).json({ error: "Missing required field: amount" });
+          return;
+        }
+
+        if (!walletAddress) {
+          res.status(400).json({ error: "Missing required field: walletAddress" });
+          return;
+        }
+
+        const suggestion = await dbService.getYieldSuggestion(Number(id));
+
+        if (!suggestion) {
+          res.status(404).json({ error: "Yield suggestion not found" });
+          return;
+        }
+
+        const intent = await dbService.createYieldSuggestionIntent(
+          suggestion,
+          walletAddress,
+          amount,
+        );
+
+        res.json(intent);
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+
+  // TODO: add auth
+  router.get(
+    "/yield_suggestion_intent/:id/latestTxData",
+    async (req: Request, res: Response, next: NextFunction) => {
+      // TODO: tx builder to be published as npm package and consumed here
+      try {
+        const intent = await dbService.getYieldSuggestionIntent(Number(req.params.id));
+
+        if (!intent) {
+          res.status(404).json({ error: "Yield suggestion intent not found" });
+          return;
+        }
+
+        const txData = "";
+
+        res.json(txData);
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+
+  router.post(
+    "/yield_suggestion_intent/:id/submitSignedTransaction",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const { id } = req.params;
+        // TODO: review
+        const { transaction, signedTransaction } = req.body;
+
+        const intent = await dbService.getYieldSuggestionIntent(Number(id));
+
+        if (!intent) {
+          res.status(404).json({ error: "Yield suggestion intent not found" });
+          return;
+        }
+
+        if (!transaction || !signedTransaction) {
+          res.status(400).json({ error: "Missing fields" });
+          return;
+        }
+
+        const config = new AptosConfig({ fullnode: "https://fullnode.mainnet.aptoslabs.com/v1" });
+        const aptos = new Aptos(config);
+
+        const deserializedTransaction = SimpleTransaction.deserialize(
+          new Deserializer(new Uint8Array(Array.from(transaction.bcsToBytes()))),
+        );
+        const senderAuthenticator = AccountAuthenticator.deserialize(
+          new Deserializer(
+            new Uint8Array(Array.from(signedTransaction.authenticator.bcsToBytes())),
+          ),
+        );
+
+        const response = await aptos.transaction.submit.simple({
+          transaction: deserializedTransaction,
+          senderAuthenticator: senderAuthenticator,
+        });
+
+        await aptos.waitForTransaction({
+          transactionHash: response.hash,
+        });
+
+        const txHistory = await dbService.insertYieldSuggestionIntentTxHistory(
+          intent,
+          response.hash,
+          TransactionStatus.FINALIZED,
+        );
+
+        res.json(txHistory);
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
 
   return router;
 }
