@@ -47,6 +47,7 @@ export class InsightAgent {
     .replace("{capital_size}", input.preferences.capitalSize.toString())
     .replace("{investment_timeframe}", input.preferences.investmentTimeframe.toString())
     .replace("{pools}", JSON.stringify(input.pools, null, 2))
+    .replace("{predictions}",  JSON.stringify(predictionBlock, null, 2))
     .replace("{sentiment}", input.sentiment || "Unknown")
     .replace("{contracts}", JSON.stringify(input.contracts || [], null, 2));
 

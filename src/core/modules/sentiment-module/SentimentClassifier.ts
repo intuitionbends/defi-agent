@@ -70,12 +70,3 @@ export class SentimentModule {
     return sorted[0]?.[0] || "unknown";
   }
 }
-
-if (require.main === module) {
-  const sentimentModule = new SentimentModule();
-  sentimentModule.getMarketSentiment().then(sentiment => {
-    console.log("Market Sentiment:", sentiment);
-  }).catch(err => {
-    console.error("Error fetching market sentiment:", err);
-  });
-}
