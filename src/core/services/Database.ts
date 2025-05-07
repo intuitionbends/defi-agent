@@ -112,7 +112,7 @@ export class DatabaseService {
 
     const result = await this.pool.query(
       `SELECT y.original_id, y.data_source, y.chain, y.symbol, y.project, y.apy, y.apy_base, y.apy_base_7d, 
-              y.apy_mean_30d, y.apy_pct_1d, y.apy_pct_7d, y.apy_pct_30d, y.tvl_usd 
+              y.apy_mean_30d, y.apy_pct_1d, y.apy_pct_7d, y.apy_pct_30d, y.tvl_usd, p.predicted_class, p.predicted_probability, p.binned_confidence
        FROM pool_yields y
        JOIN defillama_enriched_pools p
        ON y.original_id = p.pool

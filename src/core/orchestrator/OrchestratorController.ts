@@ -1,5 +1,5 @@
 import { MappingModule } from "../modules/MapperModule";
-import { SentimentModule } from "../modules/SentimentModule";
+import { SentimentModule } from "../modules/sentiment-module/SentimentClassifier";
 import { InsightAgent, InsightAgentOutput } from "../../agents/agent/InsightAgent";
 import { DatabaseService } from "../services/Database";
 import { UserPreferences } from "../../types/types";
